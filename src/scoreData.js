@@ -1,10 +1,13 @@
-import redHighHeelsPage1 from './assets/imgs/20260512-222715.jpg'
-import redHighHeelsPage2 from './assets/imgs/20260512-222729.jpg'
-import redHighHeelsPage3 from './assets/imgs/20260512-222735.jpg'
-import redHighHeelsPage4 from './assets/imgs/20260512-222739.jpg'
-import huGuangShengPage1 from './assets/imgs/20260512-222743.jpg'
-import huGuangShengPage2 from './assets/imgs/20260512-222747.jpg'
-import houLaiPage1 from './assets/imgs/20260512-222751.jpg'
+import redHighHeelsPage1 from './assets/imgs/hong-se-gao-gen-xie-01.jpg'
+import redHighHeelsPage2 from './assets/imgs/hong-se-gao-gen-xie-02.jpg'
+import redHighHeelsPage3 from './assets/imgs/hong-se-gao-gen-xie-03.jpg'
+import redHighHeelsPage4 from './assets/imgs/hong-se-gao-gen-xie-04.jpg'
+import huGuangShengPage1 from './assets/imgs/hu-guang-sheng-01.jpg'
+import huGuangShengPage2 from './assets/imgs/hu-guang-sheng-02.jpg'
+import shengXiaDeGuoShiPage1 from './assets/imgs/sheng-xia-de-guo-shi-01.jpg'
+import daoJiangXingPage1 from './assets/imgs/dao-jiang-xing-01.jpg'
+import daoJiangXingPage2 from './assets/imgs/dao-jiang-xing-02.jpg'
+import daoJiangXingPage3 from './assets/imgs/dao-jiang-xing-03.jpg'
 
 const rawScores = [
   {
@@ -30,21 +33,48 @@ const rawScores = [
     ],
   },
   {
-    id: 'hou-lai',
+    id: 'sheng-xia-de-guo-shi',
     title: '盛夏的果实',
     artist: '莫文蔚',
     arranger: '未标注',
     originalKey: '未标注',
     selectedKey: 'C',
     tuning: '标准调弦',
-    firstLetter: 'H',
-    sortKey: 'hou lai',
+    firstLetter: 'S',
+    sortKey: 'sheng xia de guo shi',
     defaultSpeed: 38,
     tags: ['和弦歌词谱', '弹唱谱', '1 页'],
     source: '图片内容识别：C 调和弦歌词谱',
     summary:
       '一页长图和弦歌词谱，主要和弦为 C、G、Am、Em、F。适合按歌词推进弹唱，自动播放速度默认更慢，便于跟唱换和弦。',
-    pages: [{ src: houLaiPage1, label: '第 1 页', focus: '主歌、副歌与反复段落' }],
+    pages: [
+      {
+        src: shengXiaDeGuoShiPage1,
+        label: '第 1 页',
+        focus: '主歌、副歌与反复段落',
+      },
+    ],
+  },
+  {
+    id: 'dao-jiang-xing',
+    title: '盗将行',
+    artist: '花粥 / 马雨阳',
+    arranger: '未标注',
+    originalKey: 'D',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'D',
+    sortKey: 'dao jiang xing',
+    defaultSpeed: 36,
+    tags: ['和弦歌词谱', '指弹前奏', '3 页'],
+    source: '图片标注：原唱调 1=D，拍号 4/4',
+    summary:
+      '三页和弦歌词谱，含前奏、间奏、副歌与尾奏。主要和弦为 Fmaj7、G、Em、Am，适合慢速跟唱并练习前奏与尾奏的分解节奏。',
+    pages: [
+      { src: daoJiangXingPage1, label: '第 1 页', focus: '前奏、主歌、副歌' },
+      { src: daoJiangXingPage2, label: '第 2 页', focus: '间奏、主歌推进' },
+      { src: daoJiangXingPage3, label: '第 3 页', focus: '副歌收束、尾奏' },
+    ],
   },
   {
     id: 'hu-guang-sheng',

@@ -21,6 +21,26 @@ const DEFAULT_SPEED = 42
 const MIN_SPEED = 16
 const MAX_SPEED = 86
 
+function setWindowScrollTop(top, behavior = 'auto') {
+  if (behavior === 'smooth') {
+    window.scrollTo({ top, behavior })
+    return
+  }
+
+  const scrollingElement = document.scrollingElement || document.documentElement
+  scrollingElement.scrollTop = top
+  document.body.scrollTop = top
+}
+
+function setElementScrollTop(element, top, behavior = 'auto') {
+  if (behavior === 'smooth') {
+    element.scrollTo({ top, behavior })
+    return
+  }
+
+  element.scrollTop = top
+}
+
 function readRoute() {
   const hash = window.location.hash.replace(/^#/, '')
   const [, maybeScoreId] = hash.match(/^\/score\/([^/]+)$/) || []
@@ -52,14 +72,15 @@ function getScrollTarget(element) {
     return {
       top: element.scrollTop,
       max: Math.max(0, element.scrollHeight - element.clientHeight),
-      scrollTo: (top, behavior = 'auto') => element.scrollTo({ top, behavior }),
+      scrollTo: (top, behavior = 'auto') =>
+        setElementScrollTop(element, top, behavior),
     }
   }
 
   return {
     top: window.scrollY,
     max: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
-    scrollTo: (top, behavior = 'auto') => window.scrollTo({ top, behavior }),
+    scrollTo: (top, behavior = 'auto') => setWindowScrollTop(top, behavior),
   }
 }
 
@@ -200,14 +221,16 @@ function PlaybackView({ score }) {
   const [speed, setSpeed] = useState(() =>
     readStoredSpeed(score.id, score.defaultSpeed || DEFAULT_SPEED),
   )
+  const speedRef = useRef(speed)
   const [progress, setProgress] = useState(0)
   const { previous, next } = useMemo(() => getAdjacentScores(score.id), [score.id])
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' })
+    setWindowScrollTop(0)
   }, [])
 
   useEffect(() => {
+    speedRef.current = speed
     window.localStorage.setItem(`${SPEED_KEY_PREFIX}${score.id}`, String(speed))
   }, [score.id, speed])
 
@@ -258,7 +281,7 @@ function PlaybackView({ score }) {
 
       const elapsed = timestamp - lastFrameRef.current
       lastFrameRef.current = timestamp
-      const pixelsPerSecond = speed
+      const pixelsPerSecond = speedRef.current
       const target = getScrollTarget(readerRef.current)
       const nextTop = target.top + (pixelsPerSecond * elapsed) / 1000
 
@@ -276,7 +299,7 @@ function PlaybackView({ score }) {
     animationRef.current = requestAnimationFrame(step)
 
     return () => cancelAnimationFrame(animationRef.current)
-  }, [isPlaying, speed])
+  }, [isPlaying])
 
   const seekToProgress = useCallback((value) => {
     const nextProgress = Number(value)
