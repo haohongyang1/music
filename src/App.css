@@ -312,28 +312,28 @@ input[type='range'] {
   left: 50%;
   bottom: max(18px, env(safe-area-inset-bottom));
   z-index: 30;
-  width: min(500px, calc(100vw - 24px));
+  width: min(360px, calc(100vw - 24px));
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 14px;
   align-items: center;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
-    rgba(12, 16, 14, 0.66);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)),
+    rgba(10, 10, 10, 0.54);
   color: #fff;
   box-shadow:
-    0 22px 60px rgba(0, 0, 0, 0.46),
-    0 1px 0 rgba(255, 255, 255, 0.16) inset;
+    0 18px 44px rgba(0, 0, 0, 0.42),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 12px);
   transition:
     opacity 0.18s ease,
     transform 0.18s ease;
-  backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(120%);
 }
 
 .score-reader[data-controls-visible='true'] .playback-controls {
@@ -343,53 +343,52 @@ input[type='range'] {
 }
 
 .playback-play {
-  min-height: 54px;
-  display: inline-flex;
+  width: 52px;
+  height: 52px;
+  min-height: 52px;
+  display: inline-grid;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 8px 18px 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 7px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
   color: #fff;
   background:
-    linear-gradient(180deg, rgba(116, 198, 157, 0.95), rgba(31, 107, 76, 0.95)),
-    var(--accent-strong);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08)),
+    rgba(255, 255, 255, 0.14);
   box-shadow:
-    0 12px 24px rgba(31, 107, 76, 0.34),
-    0 1px 0 rgba(255, 255, 255, 0.28) inset;
-  font-weight: 820;
-  letter-spacing: 0;
+    0 10px 24px rgba(0, 0, 0, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset;
   cursor: pointer;
   transition:
+    background 0.16s ease,
     box-shadow 0.16s ease,
-    filter 0.16s ease,
     transform 0.16s ease;
 }
 
 .playback-play svg {
-  width: 34px;
-  height: 34px;
-  padding: 7px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.28) inset;
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+  stroke-width: 2.5;
 }
 
 .playback-play:hover {
-  filter: brightness(1.04);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.11)),
+    rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 16px 30px rgba(31, 107, 76, 0.42),
-    0 1px 0 rgba(255, 255, 255, 0.32) inset;
+    0 14px 30px rgba(0, 0, 0, 0.38),
+    0 1px 0 rgba(255, 255, 255, 0.24) inset;
   transform: translateY(-1px);
 }
 
 .playback-play:active {
-  filter: brightness(0.98);
   box-shadow:
-    0 8px 18px rgba(31, 107, 76, 0.28),
-    0 1px 0 rgba(255, 255, 255, 0.18) inset;
-  transform: translateY(1px);
+    0 6px 16px rgba(0, 0, 0, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
+  transform: scale(0.97);
 }
 
 .playback-speed {
@@ -419,7 +418,7 @@ input[type='range'] {
   height: 22px;
   margin-top: 2px;
   cursor: pointer;
-  accent-color: #8bdcad;
+  accent-color: rgba(255, 255, 255, 0.88);
 }
 
 .countdown-overlay {
@@ -440,7 +439,7 @@ input[type='range'] {
   place-items: center;
   border-radius: 50%;
   color: #fff;
-  background: conic-gradient(rgba(139, 220, 173, 0.95), rgba(255, 255, 255, 0.18));
+  background: conic-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.16));
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.18) inset,
     0 26px 70px rgba(0, 0, 0, 0.45);
@@ -451,7 +450,8 @@ input[type='range'] {
   position: absolute;
   inset: 12%;
   border-radius: 50%;
-  background: rgba(31, 107, 76, 0.82);
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(18px);
   content: '';
 }
 
@@ -645,22 +645,23 @@ input[type='range'] {
   }
 
   .playback-controls {
-    grid-template-columns: 1fr;
-    width: min(420px, calc(100vw - 24px));
+    grid-template-columns: 50px minmax(0, 1fr);
+    width: min(340px, calc(100vw - 24px));
     gap: 12px;
-    padding: 12px;
+    padding: 10px;
     bottom: max(12px, env(safe-area-inset-bottom));
   }
 
   .playback-play {
-    width: 100%;
+    width: 50px;
+    height: 50px;
     min-height: 50px;
-    padding: 8px 16px 8px 10px;
+    padding: 0;
   }
 
   .playback-play svg {
-    width: 32px;
-    height: 32px;
+    width: 23px;
+    height: 23px;
   }
 
   .score-page img {
