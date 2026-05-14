@@ -206,26 +206,63 @@ function PlaybackView({ score }) {
   const animationRef = useRef(0)
   const lastFrameRef = useRef(0)
   const scrollTopRef = useRef(0)
+  const touchYRef = useRef(0)
   const readerRef = useRef(null)
   const controlsTimerRef = useRef(0)
   const countdownTimerRef = useRef(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showControls, setShowControls] = useState(false)
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS)
+  const [progress, setProgress] = useState(0)
   const [speed, setSpeed] = useState(() => readStoredSpeed(DEFAULT_SPEED))
   const speedRef = useRef(speed)
+
+  const setReaderOffset = useCallback((top) => {
+    const target = getScrollTarget(readerRef.current)
+    const nextTop = Math.min(target.max, Math.max(0, top))
+
+    target.scrollTo(nextTop)
+    scrollTopRef.current = nextTop
+    setProgress(target.max > 0 ? (nextTop / target.max) * 100 : 0)
+  }, [])
+
+  const seekToProgress = useCallback(
+    (value) => {
+      const target = getScrollTarget(readerRef.current)
+      const nextProgress = Number(value)
+
+      setReaderOffset((target.max * nextProgress) / 100)
+      lastFrameRef.current = 0
+    },
+    [setReaderOffset],
+  )
+
+  const moveReaderBy = useCallback(
+    (delta) => {
+      setReaderOffset(scrollTopRef.current + delta)
+      lastFrameRef.current = 0
+    },
+    [setReaderOffset],
+  )
 
   useEffect(() => {
     setWindowScrollTop(0)
     setElementScrollTop(readerRef.current, 0)
-    setScoreOffset(readerRef.current, 0)
-    scrollTopRef.current = 0
-  }, [])
+    setReaderOffset(0)
+  }, [setReaderOffset])
 
   useEffect(() => {
     speedRef.current = speed
     window.localStorage.setItem(SPEED_STORAGE_KEY, String(speed))
   }, [speed])
+
+  useEffect(() => {
+    const handleResize = () => setReaderOffset(scrollTopRef.current)
+
+    window.addEventListener('resize', handleResize)
+
+    return () => window.removeEventListener('resize', handleResize)
+  }, [setReaderOffset])
 
   useEffect(() => {
     countdownTimerRef.current = window.setInterval(() => {
@@ -270,21 +307,19 @@ function PlaybackView({ score }) {
       const nextTop = scrollTopRef.current + (pixelsPerSecond * elapsed) / 1000
 
       if (nextTop >= target.max - 2) {
-        target.scrollTo(target.max)
-        scrollTopRef.current = target.max
+        setReaderOffset(target.max)
         setIsPlaying(false)
         return
       }
 
-      target.scrollTo(nextTop)
-      scrollTopRef.current = nextTop
+      setReaderOffset(nextTop)
       animationRef.current = requestAnimationFrame(step)
     }
 
     animationRef.current = requestAnimationFrame(step)
 
     return () => cancelAnimationFrame(animationRef.current)
-  }, [isPlaying])
+  }, [isPlaying, setReaderOffset])
 
   const revealControls = useCallback(() => {
     window.clearTimeout(controlsTimerRef.current)
@@ -305,6 +340,52 @@ function PlaybackView({ score }) {
     setIsPlaying((playing) => !playing)
     revealControls()
   }, [revealControls])
+
+  const handleReaderWheel = useCallback(
+    (event) => {
+      if (event.target.closest('.playback-controls')) {
+        return
+      }
+
+      if (Math.abs(event.deltaY) < 1) {
+        return
+      }
+
+      event.preventDefault()
+      revealControls()
+      moveReaderBy(event.deltaY)
+    },
+    [moveReaderBy, revealControls],
+  )
+
+  const handleReaderTouchStart = useCallback((event) => {
+    if (event.target.closest('.playback-controls')) {
+      return
+    }
+
+    touchYRef.current = event.touches[0]?.clientY || 0
+  }, [])
+
+  const handleReaderTouchMove = useCallback(
+    (event) => {
+      if (event.target.closest('.playback-controls')) {
+        return
+      }
+
+      const nextY = event.touches[0]?.clientY || touchYRef.current
+      const delta = touchYRef.current - nextY
+
+      if (Math.abs(delta) < 2) {
+        return
+      }
+
+      event.preventDefault()
+      revealControls()
+      moveReaderBy(delta)
+      touchYRef.current = nextY
+    },
+    [moveReaderBy, revealControls],
+  )
 
   return (
     <main className="playback-shell">
@@ -327,41 +408,63 @@ function PlaybackView({ score }) {
 
           navigateToLibrary()
         }}
+        onWheel={handleReaderWheel}
+        onTouchStart={handleReaderTouchStart}
+        onTouchMove={handleReaderTouchMove}
       >
         <div
           className="playback-controls"
           onClick={(event) => event.stopPropagation()}
           onDoubleClick={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
           onPointerDown={keepControlsVisible}
           onPointerUp={revealControls}
         >
-          <button
-            type="button"
-            className="playback-play"
-            onClick={togglePlayback}
-            aria-label={isPlaying ? '暂停' : '播放'}
-          >
-            {isPlaying ? <Pause size={22} /> : <Play size={22} />}
-          </button>
-          <label className="playback-speed" htmlFor="playback-speed">
-            <span>
-              <Gauge size={17} />
-              速度
-            </span>
-            <strong>{speed}px/s</strong>
+          <label className="playback-progress" htmlFor="playback-progress">
+            <span>进度</span>
+            <strong>{Math.round(progress)}%</strong>
             <input
-              id="playback-speed"
+              id="playback-progress"
               type="range"
-              min={MIN_SPEED}
-              max={MAX_SPEED}
-              step="1"
-              value={speed}
+              min="0"
+              max="100"
+              step="0.1"
+              value={progress}
               onChange={(event) => {
-                setSpeed(Number(event.target.value))
+                seekToProgress(event.target.value)
                 keepControlsVisible()
               }}
             />
           </label>
+          <div className="playback-control-row">
+            <button
+              type="button"
+              className="playback-play"
+              onClick={togglePlayback}
+              aria-label={isPlaying ? '暂停' : '播放'}
+            >
+              {isPlaying ? <Pause size={22} /> : <Play size={22} />}
+            </button>
+            <label className="playback-speed" htmlFor="playback-speed">
+              <span>
+                <Gauge size={17} />
+                速度
+              </span>
+              <strong>{speed}px/s</strong>
+              <input
+                id="playback-speed"
+                type="range"
+                min={MIN_SPEED}
+                max={MAX_SPEED}
+                step="1"
+                value={speed}
+                onChange={(event) => {
+                  setSpeed(Number(event.target.value))
+                  keepControlsVisible()
+                }}
+              />
+            </label>
+          </div>
         </div>
         {score.pages.map((page, index) => (
           <figure className="score-page" key={page.src}>
@@ -369,6 +472,7 @@ function PlaybackView({ score }) {
               id={`${score.id}-page-${index + 1}`}
               src={page.src}
               alt={`${score.title} ${page.label}`}
+              onLoad={() => setReaderOffset(scrollTopRef.current)}
             />
           </figure>
         ))}
