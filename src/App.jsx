@@ -1,25 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowLeft,
-  ChevronLeft,
   ChevronRight,
   Gauge,
   ListMusic,
-  Maximize2,
-  Minimize2,
   Pause,
   Play,
-  RotateCcw,
-  SkipBack,
-  SkipForward,
 } from 'lucide-react'
 import './App.css'
-import { getAdjacentScores, getScoreById, scoreGroups, scores } from './scoreData'
+import { getScoreById, scoreGroups, scores } from './scoreData'
 
-const SPEED_KEY_PREFIX = 'score-autoplay-speed:'
-const DEFAULT_SPEED = 42
-const MIN_SPEED = 16
-const MAX_SPEED = 86
+const SPEED_STORAGE_KEY = 'score-autoplay-speed'
+const DEFAULT_SPEED = 18
+const MIN_SPEED = 8
+const MAX_SPEED = 36
+const COUNTDOWN_SECONDS = 3
 
 function setWindowScrollTop(top, behavior = 'auto') {
   if (behavior === 'smooth') {
@@ -33,12 +28,20 @@ function setWindowScrollTop(top, behavior = 'auto') {
 }
 
 function setElementScrollTop(element, top, behavior = 'auto') {
+  if (!element) {
+    return
+  }
+
   if (behavior === 'smooth') {
     element.scrollTo({ top, behavior })
     return
   }
 
   element.scrollTop = top
+}
+
+function setScoreOffset(element, top) {
+  element?.style.setProperty('--score-offset', `${top}px`)
 }
 
 function readRoute() {
@@ -56,24 +59,23 @@ function navigateToScore(scoreId) {
   window.location.hash = `/score/${scoreId}`
 }
 
-function readStoredSpeed(scoreId, fallback) {
-  const stored = window.localStorage.getItem(`${SPEED_KEY_PREFIX}${scoreId}`)
+function readStoredSpeed(fallback) {
+  const stored = window.localStorage.getItem(SPEED_STORAGE_KEY)
   const parsed = Number(stored)
 
-  return Number.isFinite(parsed) ? parsed : fallback
-}
+  if (!Number.isFinite(parsed)) {
+    return fallback
+  }
 
-function clampProgress(value) {
-  return Math.min(100, Math.max(0, value))
+  return Math.min(MAX_SPEED, Math.max(MIN_SPEED, parsed))
 }
 
 function getScrollTarget(element) {
-  if (element && document.fullscreenElement === element) {
+  if (element) {
     return {
-      top: element.scrollTop,
+      top: 0,
       max: Math.max(0, element.scrollHeight - element.clientHeight),
-      scrollTo: (top, behavior = 'auto') =>
-        setElementScrollTop(element, top, behavior),
+      scrollTo: (top) => setScoreOffset(element, top),
     }
   }
 
@@ -82,16 +84,6 @@ function getScrollTarget(element) {
     max: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
     scrollTo: (top, behavior = 'auto') => setWindowScrollTop(top, behavior),
   }
-}
-
-function getCurrentProgress(element) {
-  const target = getScrollTarget(element)
-
-  if (target.max === 0) {
-    return 0
-  }
-
-  return clampProgress((target.top / target.max) * 100)
 }
 
 function App() {
@@ -213,59 +205,51 @@ function LibraryView() {
 function PlaybackView({ score }) {
   const animationRef = useRef(0)
   const lastFrameRef = useRef(0)
+  const scrollTopRef = useRef(0)
   const readerRef = useRef(null)
   const controlsTimerRef = useRef(0)
+  const countdownTimerRef = useRef(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [showFullscreenControls, setShowFullscreenControls] = useState(false)
-  const [speed, setSpeed] = useState(() =>
-    readStoredSpeed(score.id, score.defaultSpeed || DEFAULT_SPEED),
-  )
+  const [showControls, setShowControls] = useState(false)
+  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS)
+  const [speed, setSpeed] = useState(() => readStoredSpeed(DEFAULT_SPEED))
   const speedRef = useRef(speed)
-  const [progress, setProgress] = useState(0)
-  const { previous, next } = useMemo(() => getAdjacentScores(score.id), [score.id])
 
   useEffect(() => {
     setWindowScrollTop(0)
+    setElementScrollTop(readerRef.current, 0)
+    setScoreOffset(readerRef.current, 0)
+    scrollTopRef.current = 0
   }, [])
 
   useEffect(() => {
     speedRef.current = speed
-    window.localStorage.setItem(`${SPEED_KEY_PREFIX}${score.id}`, String(speed))
-  }, [score.id, speed])
+    window.localStorage.setItem(SPEED_STORAGE_KEY, String(speed))
+  }, [speed])
 
   useEffect(() => {
-    const reader = readerRef.current
-    const updateProgress = () => setProgress(getCurrentProgress(reader))
+    countdownTimerRef.current = window.setInterval(() => {
+      setCountdown((current) => {
+        if (current <= 1) {
+          window.clearInterval(countdownTimerRef.current)
+          setIsPlaying(true)
+          return 0
+        }
 
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    reader?.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
-    updateProgress()
+        return current - 1
+      })
+    }, 1000)
 
-    return () => {
-      window.removeEventListener('scroll', updateProgress)
-      reader?.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
-    }
+    return () => window.clearInterval(countdownTimerRef.current)
   }, [score.id])
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const active = document.fullscreenElement === readerRef.current
-      setIsFullscreen(active)
-      setShowFullscreenControls(false)
-      setProgress(getCurrentProgress(readerRef.current))
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
-
-  useEffect(() => {
-    return () => window.clearTimeout(controlsTimerRef.current)
-  }, [])
+  useEffect(
+    () => () => {
+      window.clearTimeout(controlsTimerRef.current)
+      window.clearInterval(countdownTimerRef.current)
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!isPlaying) {
@@ -283,16 +267,17 @@ function PlaybackView({ score }) {
       lastFrameRef.current = timestamp
       const pixelsPerSecond = speedRef.current
       const target = getScrollTarget(readerRef.current)
-      const nextTop = target.top + (pixelsPerSecond * elapsed) / 1000
+      const nextTop = scrollTopRef.current + (pixelsPerSecond * elapsed) / 1000
 
       if (nextTop >= target.max - 2) {
         target.scrollTo(target.max)
+        scrollTopRef.current = target.max
         setIsPlaying(false)
-        setProgress(100)
         return
       }
 
       target.scrollTo(nextTop)
+      scrollTopRef.current = nextTop
       animationRef.current = requestAnimationFrame(step)
     }
 
@@ -301,283 +286,107 @@ function PlaybackView({ score }) {
     return () => cancelAnimationFrame(animationRef.current)
   }, [isPlaying])
 
-  const seekToProgress = useCallback((value) => {
-    const nextProgress = Number(value)
-    const target = getScrollTarget(readerRef.current)
-    const top = (target.max * nextProgress) / 100
-    target.scrollTo(top)
-    setProgress(nextProgress)
-  }, [])
-
-  const restart = useCallback(() => {
-    getScrollTarget(readerRef.current).scrollTo(0, 'smooth')
-    setProgress(0)
-    setIsPlaying(true)
-  }, [])
-
-  const enterFullscreen = useCallback(async () => {
-    if (!readerRef.current || !document.fullscreenEnabled) {
-      return
-    }
-
-    await readerRef.current.requestFullscreen()
-  }, [])
-
-  const exitFullscreen = useCallback(async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen()
-    }
-  }, [])
-
-  const revealFullscreenControls = useCallback(() => {
-    if (document.fullscreenElement !== readerRef.current) {
-      return
-    }
-
+  const revealControls = useCallback(() => {
     window.clearTimeout(controlsTimerRef.current)
-    setShowFullscreenControls(true)
+    setShowControls(true)
     controlsTimerRef.current = window.setTimeout(() => {
-      setShowFullscreenControls(false)
+      setShowControls(false)
     }, 2600)
   }, [])
 
-  const keepFullscreenControlsVisible = useCallback(() => {
-    if (document.fullscreenElement !== readerRef.current) {
-      return
-    }
-
+  const keepControlsVisible = useCallback(() => {
     window.clearTimeout(controlsTimerRef.current)
-    setShowFullscreenControls(true)
+    setShowControls(true)
   }, [])
+
+  const togglePlayback = useCallback(() => {
+    window.clearInterval(countdownTimerRef.current)
+    setCountdown(0)
+    setIsPlaying((playing) => !playing)
+    revealControls()
+  }, [revealControls])
 
   return (
     <main className="playback-shell">
-      <header className="playback-header">
-        <button type="button" className="ghost-button" onClick={navigateToLibrary}>
-          <ArrowLeft size={18} />
-          列表
-        </button>
-        <div className="playback-title">
-          <p className="eyebrow">正在练习</p>
-          <h1>{score.title}</h1>
-          <p>
-            {score.artist} · {score.pageCount} 页 · 选调 {score.selectedKey}
-          </p>
-        </div>
-        <div className="song-nav">
-          <button
-            type="button"
-            className="icon-button"
-            onClick={() => navigateToScore(previous.id)}
-            title={`上一首：${previous.title}`}
-            aria-label={`上一首：${previous.title}`}
-          >
-            <SkipBack size={19} />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            onClick={() => navigateToScore(next.id)}
-            title={`下一首：${next.title}`}
-            aria-label={`下一首：${next.title}`}
-          >
-            <SkipForward size={19} />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            onClick={enterFullscreen}
-            title="全屏乐谱"
-            aria-label="全屏乐谱"
-          >
-            <Maximize2 size={19} />
-          </button>
-        </div>
-      </header>
+      <section
+        className="score-reader"
+        ref={readerRef}
+        aria-label={`${score.title} 乐谱`}
+        data-controls-visible={showControls ? 'true' : 'false'}
+        onClick={(event) => {
+          if (event.target.closest('.playback-controls')) {
+            return
+          }
 
-      <section className="practice-layout">
-        <aside className="practice-panel" aria-label="播放控制">
-          <div className="panel-section">
-            <p className="panel-label">自动播放</p>
-            <div className="transport-row">
-              <button
-                type="button"
-                className="primary-action"
-                onClick={() => setIsPlaying((playing) => !playing)}
-              >
-                {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-                {isPlaying ? '暂停' : '播放'}
-              </button>
-              <button
-                type="button"
-                className="icon-button"
-                onClick={restart}
-                title="从头播放"
-                aria-label="从头播放"
-              >
-                <RotateCcw size={18} />
-              </button>
-            </div>
-          </div>
+          revealControls()
+        }}
+        onDoubleClick={(event) => {
+          if (event.target.closest('.playback-controls')) {
+            return
+          }
 
-          <div className="panel-section">
-            <label className="range-label" htmlFor="speed">
-              <span>
-                <Gauge size={17} />
-                速度
-              </span>
-              <strong>{speed}px/s</strong>
-            </label>
+          navigateToLibrary()
+        }}
+      >
+        <div
+          className="playback-controls"
+          onClick={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+          onPointerDown={keepControlsVisible}
+          onPointerUp={revealControls}
+        >
+          <button
+            type="button"
+            className="playback-play"
+            onClick={togglePlayback}
+            aria-label={isPlaying ? '暂停' : '播放'}
+          >
+            {isPlaying ? <Pause size={22} /> : <Play size={22} />}
+          </button>
+          <label className="playback-speed" htmlFor="playback-speed">
+            <span>
+              <Gauge size={17} />
+              速度
+            </span>
+            <strong>{speed}px/s</strong>
             <input
-              id="speed"
+              id="playback-speed"
               type="range"
               min={MIN_SPEED}
               max={MAX_SPEED}
+              step="1"
               value={speed}
-              onChange={(event) => setSpeed(Number(event.target.value))}
+              onChange={(event) => {
+                setSpeed(Number(event.target.value))
+                keepControlsVisible()
+              }}
             />
-            <div className="range-hints">
-              <span>慢</span>
-              <span>快</span>
+          </label>
+        </div>
+        {score.pages.map((page, index) => (
+          <figure className="score-page" key={page.src}>
+            <img
+              id={`${score.id}-page-${index + 1}`}
+              src={page.src}
+              alt={`${score.title} ${page.label}`}
+            />
+          </figure>
+        ))}
+        {countdown > 0 && (
+          <div className="countdown-overlay" aria-live="polite" aria-label={`${countdown} 秒后自动播放`}>
+            <div className="countdown-pulse" key={countdown}>
+              <span>{countdown}</span>
             </div>
           </div>
-
-          <div className="panel-section">
-            <label className="range-label" htmlFor="progress">
-              <span>进度</span>
-              <strong>{Math.round(progress)}%</strong>
-            </label>
-            <input
-              id="progress"
-              type="range"
-              min="0"
-              max="100"
-              value={progress}
-              onChange={(event) => seekToProgress(event.target.value)}
-            />
-          </div>
-
-          <div className="panel-section">
-            <p className="panel-label">乐曲摘要</p>
-            <p className="panel-copy">{score.summary}</p>
-            <dl className="detail-list">
-              <div>
-                <dt>原调</dt>
-                <dd>{score.originalKey}</dd>
-              </div>
-              <div>
-                <dt>选调</dt>
-                <dd>{score.selectedKey}</dd>
-              </div>
-              <div>
-                <dt>来源</dt>
-                <dd>{score.source}</dd>
-              </div>
-            </dl>
-          </div>
-        </aside>
-
-        <section
-          className="score-reader"
-          ref={readerRef}
-          aria-label={`${score.title} 乐谱`}
-          data-fullscreen-active={isFullscreen ? 'true' : 'false'}
-          data-controls-visible={showFullscreenControls ? 'true' : 'false'}
-          onClick={(event) => {
-            if (event.target.closest('.fullscreen-controls')) {
-              return
-            }
-
-            revealFullscreenControls()
-          }}
-        >
-          <div
-            className="fullscreen-controls"
-            onClick={(event) => event.stopPropagation()}
-            onPointerDown={keepFullscreenControlsVisible}
-            onPointerUp={revealFullscreenControls}
-          >
-            <button
-              type="button"
-              className="fullscreen-play"
-              onClick={() => {
-                setIsPlaying((playing) => !playing)
-                revealFullscreenControls()
-              }}
-              aria-label={isPlaying ? '暂停' : '播放'}
-            >
-              {isPlaying ? <Pause size={22} /> : <Play size={22} />}
-              {isPlaying ? '暂停' : '播放'}
-            </button>
-            <button
-              type="button"
-              className="fullscreen-exit"
-              onClick={exitFullscreen}
-              aria-label="退出全屏"
-            >
-              <Minimize2 size={21} />
-              退出
-            </button>
-            <label className="fullscreen-speed" htmlFor="fullscreen-speed">
-              <span>速度</span>
-              <strong>{speed}px/s</strong>
-              <input
-                id="fullscreen-speed"
-                type="range"
-                min={MIN_SPEED}
-                max={MAX_SPEED}
-                value={speed}
-                onChange={(event) => {
-                  setSpeed(Number(event.target.value))
-                  keepFullscreenControlsVisible()
-                }}
-              />
-            </label>
-          </div>
-          {score.pages.map((page, index) => (
-            <figure className="score-page" key={page.src}>
-              <div className="page-toolbar">
-                <span>{page.label}</span>
-                <small>{page.focus}</small>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => {
-                    const pageTop = document
-                      .getElementById(`${score.id}-page-${index + 1}`)
-                      ?.getBoundingClientRect().top
-
-                    if (typeof pageTop === 'number') {
-                      window.scrollTo({
-                        top: window.scrollY + pageTop - 96,
-                        behavior: 'smooth',
-                      })
-                    }
-                  }}
-                >
-                  跳转
-                </button>
-              </div>
-              <img
-                id={`${score.id}-page-${index + 1}`}
-                src={page.src}
-                alt={`${score.title} ${page.label}`}
-              />
-            </figure>
-          ))}
-        </section>
+        )}
       </section>
-
-      <div className="mobile-stepper" aria-label="切换乐曲">
-        <button type="button" onClick={() => navigateToScore(previous.id)}>
-          <ChevronLeft size={18} />
-          {previous.title}
-        </button>
-        <button type="button" onClick={() => navigateToScore(next.id)}>
-          {next.title}
-          <ChevronRight size={18} />
-        </button>
-      </div>
+      <button
+        type="button"
+        className="screen-reader-return"
+        onClick={navigateToLibrary}
+      >
+        返回列表
+      </button>
     </main>
   )
 }

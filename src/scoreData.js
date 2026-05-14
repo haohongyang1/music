@@ -20,7 +20,6 @@ const rawScores = [
     tuning: '标准调弦',
     firstLetter: 'H',
     sortKey: 'hong se gao gen xie',
-    defaultSpeed: 44,
     tags: ['指弹节奏', '弹唱谱', '4 页'],
     source: '图片标注：大树音乐屋，选调 C，原调 D',
     summary:
@@ -42,7 +41,6 @@ const rawScores = [
     tuning: '标准调弦',
     firstLetter: 'S',
     sortKey: 'sheng xia de guo shi',
-    defaultSpeed: 38,
     tags: ['和弦歌词谱', '弹唱谱', '1 页'],
     source: '图片内容识别：C 调和弦歌词谱',
     summary:
@@ -65,7 +63,6 @@ const rawScores = [
     tuning: '标准调弦',
     firstLetter: 'D',
     sortKey: 'dao jiang xing',
-    defaultSpeed: 36,
     tags: ['和弦歌词谱', '指弹前奏', '3 页'],
     source: '图片标注：原唱调 1=D，拍号 4/4',
     summary:
@@ -86,7 +83,6 @@ const rawScores = [
     tuning: '标准调弦',
     firstLetter: 'H',
     sortKey: 'hu guang sheng',
-    defaultSpeed: 42,
     tags: ['分解和弦', '弹唱谱', '2 页'],
     source: '图片标注：原调 D 调，选调 C 调',
     summary:
