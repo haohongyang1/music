@@ -545,8 +545,8 @@ function PlaybackView({ score, onExit }) {
         }
       }
 
-      // 段落显示逻辑（保持向后兼容）
-      if (score.sections?.length) {
+      // 段落显示逻辑（保持向后兼容，但与标记点互斥）
+      if (score.sections?.length && !score.marks?.length) {
         const newSection = getSectionAtPosition(currentPos, target.max, readerRef.current?.clientHeight, score.sections)
         const newSectionId = newSection?.id || null
 
