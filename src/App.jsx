@@ -298,27 +298,39 @@ function PlaybackView({ score }) {
     const section = getSectionAtPosition(currentPos, maxScroll, score.sections)
     if (!section) return false
 
-    const repeat = score.repeats.find(r => r.fromSection === section.id)
+    // 查找当前段落作为结束段落的所有反复规则
+    const repeat = score.repeats.find(r => r.endSection === section.id)
     if (!repeat) return false
 
     if (!isInTriggerZone(currentPos, section, maxScroll)) return false
 
-    const currentCount = sectionRepeatCountRef.current[section.id] || 0
+    // 使用 startSection 作为计数 key
+    const repeatKey = `${repeat.startSection}-${repeat.endSection}`
+    const currentCount = sectionRepeatCountRef.current[repeatKey] || 0
     return currentCount < repeat.times
   }, [skipRepeat, score.sections, score.repeats, isInTriggerZone])
 
-  const executeRepeat = useCallback((section, repeat, maxScroll) => {
-    const targetSection = score.sections.find(s => s.id === repeat.toSection)
+  const executeRepeat = useCallback((endSection, maxScroll) => {
+    // 查找以当前段落为结束段落的反复规则
+    const repeat = score.repeats.find(r => r.endSection === endSection.id)
+    if (!repeat) return null
+
+    const targetSection = score.sections.find(s => s.id === repeat.jumpToSection)
     if (!targetSection) {
-      console.warn(`[Repeat] Target section not found: ${repeat.toSection}`)
+      console.warn(`[Repeat] Target section not found: ${repeat.jumpToSection}`)
       return null
     }
 
+    const repeatKey = `${repeat.startSection}-${repeat.endSection}`
+    const newCount = (sectionRepeatCountRef.current[repeatKey] || 0) + 1
+
     return {
       position: targetSection.startRatio * (maxScroll || 1),
-      repeatCount: (sectionRepeatCountRef.current[section.id] || 0) + 1
+      repeatCount: newCount,
+      repeatKey: repeatKey,
+      targetSectionId: targetSection.id
     }
-  }, [score.sections])
+  }, [score.sections, score.repeats])
 
   const revealIndicator = useCallback(() => {
     window.clearTimeout(indicatorTimerRef.current)
@@ -419,12 +431,12 @@ function PlaybackView({ score }) {
         }
 
         if (newSection && shouldTriggerRepeat(currentPos, target.max)) {
-          const repeat = score.repeats.find(r => r.fromSection === newSection.id)
-          const jumpResult = executeRepeat(newSection, repeat, target.max)
+          const jumpResult = executeRepeat(newSection, target.max)
 
           if (jumpResult) {
-            sectionRepeatCountRef.current[newSection.id] = jumpResult.repeatCount
+            sectionRepeatCountRef.current[jumpResult.repeatKey] = jumpResult.repeatCount
             setReaderOffset(jumpResult.position)
+            setCurrentSectionId(jumpResult.targetSectionId)
             nextTop = jumpResult.position
           }
         }
@@ -516,14 +528,28 @@ function PlaybackView({ score }) {
     const section = score.sections.find(s => s.id === currentSectionId)
     if (!section) return null
 
-    const repeat = score.repeats?.find(r => r.fromSection === currentSectionId)
     const nextSection = getNextSection(currentSectionId, score.sections)
-    const count = sectionRepeatCountRef.current[currentSectionId] || 0
+
+    // 检查当前段落是否在某个反复范围内
+    const repeat = score.repeats?.find(r => {
+      const startIndex = score.sections.findIndex(s => s.id === r.startSection)
+      const endIndex = score.sections.findIndex(s => s.id === r.endSection)
+      const currentIndex = score.sections.findIndex(s => s.id === currentSectionId)
+      return currentIndex >= startIndex && currentIndex <= endIndex
+    })
 
     let display = section.name
+
+    // 如果在反复范围内，显示重复次数
     if (repeat && !skipRepeat) {
-      display = `${section.name} (${count + 1}/${repeat.times})`
+      const repeatKey = `${repeat.startSection}-${repeat.endSection}`
+      const count = sectionRepeatCountRef.current[repeatKey] || 0
+      // 只有在结束段落时才显示完整次数
+      if (currentSectionId === repeat.endSection) {
+        display = `${section.name} (${count}/${repeat.times}x)`
+      }
     }
+
     if (nextSection) {
       display += ` → ${nextSection.name}`
     }

@@ -47,9 +47,10 @@ const rawScores = [
     repeats: [
       {
         type: 'segment',
-        fromSection: 'verse-a',
-        toSection: 'verse-a',
-        times: 2
+        startSection: 'verse-a',   // 反复起始段落
+        endSection: 'verse-b',     // 反复结束段落
+        jumpToSection: 'verse-a',  // 跳回目标
+        times: 2                    // 总播放次数
       }
     ]
   },
