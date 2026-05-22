@@ -9,6 +9,12 @@ import daoJiangXingPage1 from './assets/imgs/dao-jiang-xing-01.jpg'
 import daoJiangXingPage2 from './assets/imgs/dao-jiang-xing-02.jpg'
 import daoJiangXingPage3 from './assets/imgs/dao-jiang-xing-03.jpg'
 
+export const STORAGE_KEYS = {
+  SPEED: 'score-autoplay-speed',
+  SKIP_REPEAT: 'score-skip-repeat',
+  SHOW_SECTION_INDICATOR: 'score-show-section-indicator'
+}
+
 const rawScores = [
   {
     id: 'hong-se-gao-gen-xie',
@@ -30,6 +36,22 @@ const rawScores = [
       { src: redHighHeelsPage3, label: '第 3 页', focus: 'C 段延展、尾奏' },
       { src: redHighHeelsPage4, label: '第 4 页', focus: '尾奏收束' },
     ],
+    sections: [
+      { id: 'intro', name: '前奏', startRatio: 0, endRatio: 0.12 },
+      { id: 'verse-a', name: 'A段', startRatio: 0.12, endRatio: 0.35 },
+      { id: 'verse-b', name: 'B段', startRatio: 0.35, endRatio: 0.55 },
+      { id: 'interlude', name: '间奏', startRatio: 0.55, endRatio: 0.70 },
+      { id: 'chorus-c', name: 'C段', startRatio: 0.70, endRatio: 0.88 },
+      { id: 'outro', name: '尾奏', startRatio: 0.88, endRatio: 1.0 },
+    ],
+    repeats: [
+      {
+        type: 'segment',
+        fromSection: 'verse-a',
+        toSection: 'verse-a',
+        times: 2
+      }
+    ]
   },
   {
     id: 'sheng-xia-de-guo-shi',
@@ -127,4 +149,63 @@ export function getAdjacentScores(scoreId) {
     previous: scores[(index - 1 + scores.length) % scores.length],
     next: scores[(index + 1) % scores.length],
   }
+}
+
+export function getSectionAtPosition(position, maxScroll, sections) {
+  if (!sections?.length) return null
+
+  const maxScrollSafe = maxScroll || 1
+  const positionRatio = Math.min(1, Math.max(0, position / maxScrollSafe))
+
+  return sections.find(s =>
+    positionRatio >= s.startRatio &&
+    positionRatio < s.endRatio
+  ) || null
+}
+
+export function getNextSection(currentSectionId, sections) {
+  if (!sections?.length) return null
+
+  const currentIndex = sections.findIndex(s => s.id === currentSectionId)
+  if (currentIndex === -1 || currentIndex >= sections.length - 1) return null
+
+  return sections[currentIndex + 1]
+}
+
+export function validateScoreData(score) {
+  if (!score.sections) return true
+
+  for (let i = 0; i < score.sections.length; i++) {
+    const s = score.sections[i]
+    if (s.startRatio >= s.endRatio) {
+      console.warn(`[Validation] Invalid section ${s.id}: startRatio >= endRatio`)
+      return false
+    }
+    if (i > 0) {
+      const prev = score.sections[i - 1]
+      if (prev.endRatio > s.startRatio) {
+        console.warn(`[Validation] Overlapping sections: ${prev.id} and ${s.id}`)
+        return false
+      }
+    }
+  }
+
+  if (!score.repeats) return true
+
+  for (const r of score.repeats) {
+    if (!score.sections?.find(s => s.id === r.fromSection)) {
+      console.warn(`[Validation] Invalid repeat: fromSection ${r.fromSection} not found`)
+      return false
+    }
+    if (!score.sections?.find(s => s.id === r.toSection)) {
+      console.warn(`[Validation] Invalid repeat: toSection ${r.toSection} not found`)
+      return false
+    }
+    if (r.times < 1) {
+      console.warn(`[Validation] Invalid repeat: times must be >= 1`)
+      return false
+    }
+  }
+
+  return true
 }

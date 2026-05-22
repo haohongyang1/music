@@ -2,13 +2,22 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
   Gauge,
   ListMusic,
   Pause,
   Play,
 } from 'lucide-react'
 import './App.css'
-import { getScoreById, scoreGroups, scores } from './scoreData'
+import {
+  getScoreById,
+  scoreGroups,
+  scores,
+  getSectionAtPosition,
+  getNextSection,
+  STORAGE_KEYS,
+} from './scoreData'
 
 const SPEED_STORAGE_KEY = 'score-autoplay-speed'
 const DEFAULT_SPEED = 18
@@ -210,12 +219,26 @@ function PlaybackView({ score }) {
   const readerRef = useRef(null)
   const controlsTimerRef = useRef(0)
   const countdownTimerRef = useRef(0)
+  const indicatorTimerRef = useRef(0)
+
   const [isPlaying, setIsPlaying] = useState(false)
   const [showControls, setShowControls] = useState(false)
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS)
   const [progress, setProgress] = useState(0)
   const [speed, setSpeed] = useState(() => readStoredSpeed(DEFAULT_SPEED))
   const speedRef = useRef(speed)
+
+  const [currentSectionId, setCurrentSectionId] = useState(null)
+  const [skipRepeat, setSkipRepeat] = useState(() => {
+    const stored = window.localStorage.getItem(STORAGE_KEYS.SKIP_REPEAT)
+    return stored === 'true'
+  })
+  const [showSectionIndicator, setShowSectionIndicator] = useState(() => {
+    const stored = window.localStorage.getItem(STORAGE_KEYS.SHOW_SECTION_INDICATOR)
+    return stored !== 'false'
+  })
+
+  const sectionRepeatCountRef = useRef({})
 
   const setReaderOffset = useCallback((top) => {
     const target = getScrollTarget(readerRef.current)
@@ -245,6 +268,67 @@ function PlaybackView({ score }) {
     [setReaderOffset],
   )
 
+  const revealControls = useCallback(() => {
+    window.clearTimeout(controlsTimerRef.current)
+    setShowControls(true)
+    controlsTimerRef.current = window.setTimeout(() => {
+      setShowControls(false)
+    }, 2600)
+  }, [])
+
+  const keepControlsVisible = useCallback(() => {
+    window.clearTimeout(controlsTimerRef.current)
+    setShowControls(true)
+  }, [])
+
+  const isInTriggerZone = useCallback((currentPos, section, maxScroll) => {
+    const maxScrollSafe = maxScroll || 1
+    const sectionStart = section.startRatio * maxScrollSafe
+    const sectionEnd = section.endRatio * maxScrollSafe
+    const sectionHeight = sectionEnd - sectionStart
+    const threshold = Math.max(sectionHeight * 0.05, 20)
+
+    return currentPos >= sectionEnd - threshold
+  }, [])
+
+  const shouldTriggerRepeat = useCallback((currentPos, maxScroll) => {
+    if (skipRepeat) return false
+    if (!score.sections?.length || !score.repeats?.length) return false
+
+    const section = getSectionAtPosition(currentPos, maxScroll, score.sections)
+    if (!section) return false
+
+    const repeat = score.repeats.find(r => r.fromSection === section.id)
+    if (!repeat) return false
+
+    if (!isInTriggerZone(currentPos, section, maxScroll)) return false
+
+    const currentCount = sectionRepeatCountRef.current[section.id] || 0
+    return currentCount < repeat.times
+  }, [skipRepeat, score.sections, score.repeats, isInTriggerZone])
+
+  const executeRepeat = useCallback((section, repeat, maxScroll) => {
+    const targetSection = score.sections.find(s => s.id === repeat.toSection)
+    if (!targetSection) {
+      console.warn(`[Repeat] Target section not found: ${repeat.toSection}`)
+      return null
+    }
+
+    return {
+      position: targetSection.startRatio * (maxScroll || 1),
+      repeatCount: (sectionRepeatCountRef.current[section.id] || 0) + 1
+    }
+  }, [score.sections])
+
+  const revealIndicator = useCallback(() => {
+    window.clearTimeout(indicatorTimerRef.current)
+    if (showSectionIndicator) {
+      indicatorTimerRef.current = window.setTimeout(() => {
+        setShowSectionIndicator(false)
+      }, 2500)
+    }
+  }, [showSectionIndicator])
+
   useEffect(() => {
     setWindowScrollTop(0)
     setElementScrollTop(readerRef.current, 0)
@@ -253,8 +337,19 @@ function PlaybackView({ score }) {
 
   useEffect(() => {
     speedRef.current = speed
-    window.localStorage.setItem(SPEED_STORAGE_KEY, String(speed))
+    window.localStorage.setItem(STORAGE_KEYS.SPEED, String(speed))
   }, [speed])
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEYS.SKIP_REPEAT, String(skipRepeat))
+  }, [skipRepeat])
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEYS.SHOW_SECTION_INDICATOR, String(showSectionIndicator))
+    if (showSectionIndicator) {
+      revealIndicator()
+    }
+  }, [showSectionIndicator, revealIndicator])
 
   useEffect(() => {
     const handleResize = () => setReaderOffset(scrollTopRef.current)
@@ -304,12 +399,35 @@ function PlaybackView({ score }) {
       lastFrameRef.current = timestamp
       const pixelsPerSecond = speedRef.current
       const target = getScrollTarget(readerRef.current)
-      const nextTop = scrollTopRef.current + (pixelsPerSecond * elapsed) / 1000
+      let nextTop = scrollTopRef.current + (pixelsPerSecond * elapsed) / 1000
 
       if (nextTop >= target.max - 2) {
         setReaderOffset(target.max)
         setIsPlaying(false)
         return
+      }
+
+      const currentPos = nextTop
+
+      if (score.sections?.length) {
+        const newSection = getSectionAtPosition(currentPos, target.max, score.sections)
+        const newSectionId = newSection?.id || null
+
+        if (newSectionId !== currentSectionId) {
+          setCurrentSectionId(newSectionId)
+          revealIndicator()
+        }
+
+        if (newSection && shouldTriggerRepeat(currentPos, target.max)) {
+          const repeat = score.repeats.find(r => r.fromSection === newSection.id)
+          const jumpResult = executeRepeat(newSection, repeat, target.max)
+
+          if (jumpResult) {
+            sectionRepeatCountRef.current[newSection.id] = jumpResult.repeatCount
+            setReaderOffset(jumpResult.position)
+            nextTop = jumpResult.position
+          }
+        }
       }
 
       setReaderOffset(nextTop)
@@ -319,25 +437,31 @@ function PlaybackView({ score }) {
     animationRef.current = requestAnimationFrame(step)
 
     return () => cancelAnimationFrame(animationRef.current)
-  }, [isPlaying, setReaderOffset])
-
-  const revealControls = useCallback(() => {
-    window.clearTimeout(controlsTimerRef.current)
-    setShowControls(true)
-    controlsTimerRef.current = window.setTimeout(() => {
-      setShowControls(false)
-    }, 2600)
-  }, [])
-
-  const keepControlsVisible = useCallback(() => {
-    window.clearTimeout(controlsTimerRef.current)
-    setShowControls(true)
-  }, [])
+  }, [
+    isPlaying,
+    setReaderOffset,
+    score.sections,
+    score.repeats,
+    currentSectionId,
+    shouldTriggerRepeat,
+    executeRepeat,
+    revealIndicator
+  ])
 
   const togglePlayback = useCallback(() => {
     window.clearInterval(countdownTimerRef.current)
     setCountdown(0)
     setIsPlaying((playing) => !playing)
+    revealControls()
+  }, [revealControls])
+
+  const toggleSkipRepeat = useCallback(() => {
+    setSkipRepeat(prev => !prev)
+    revealControls()
+  }, [revealControls])
+
+  const toggleIndicatorVisibility = useCallback(() => {
+    setShowSectionIndicator(prev => !prev)
     revealControls()
   }, [revealControls])
 
@@ -387,6 +511,26 @@ function PlaybackView({ score }) {
     [moveReaderBy, revealControls],
   )
 
+  const getSectionDisplay = () => {
+    if (!currentSectionId) return null
+    const section = score.sections.find(s => s.id === currentSectionId)
+    if (!section) return null
+
+    const repeat = score.repeats?.find(r => r.fromSection === currentSectionId)
+    const nextSection = getNextSection(currentSectionId, score.sections)
+    const count = sectionRepeatCountRef.current[currentSectionId] || 0
+
+    let display = section.name
+    if (repeat && !skipRepeat) {
+      display = `${section.name} (${count + 1}/${repeat.times})`
+    }
+    if (nextSection) {
+      display += ` → ${nextSection.name}`
+    }
+
+    return display
+  }
+
   return (
     <main className="playback-shell">
       <section
@@ -425,6 +569,11 @@ function PlaybackView({ score }) {
           onPointerDown={keepControlsVisible}
           onPointerUp={revealControls}
         >
+          {score.sections?.length && showSectionIndicator && (
+            <div className="section-indicator">
+              <span>{getSectionDisplay()}</span>
+            </div>
+          )}
           <label className="playback-progress" htmlFor="playback-progress">
             <span>进度</span>
             <strong>{Math.round(progress)}%</strong>
@@ -469,6 +618,28 @@ function PlaybackView({ score }) {
                 }}
               />
             </label>
+            <div className="playback-options">
+              {score.repeats?.length > 0 && (
+                <button
+                  type="button"
+                  className={`playback-option ${skipRepeat ? 'active' : ''}`}
+                  onClick={toggleSkipRepeat}
+                  aria-label={skipRepeat ? '启用反复' : '跳过反复'}
+                >
+                  跳过反复
+                </button>
+              )}
+              {score.sections?.length > 0 && (
+                <button
+                  type="button"
+                  className="playback-option-indicator"
+                  onClick={toggleIndicatorVisibility}
+                  aria-label={showSectionIndicator ? '隐藏段落' : '显示段落'}
+                >
+                  {showSectionIndicator ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              )}
+            </div>
           </div>
         </div>
         {score.pages.map((page, index) => (
