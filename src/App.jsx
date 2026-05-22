@@ -333,8 +333,6 @@ function PlaybackView({ score, onExit }) {
     const threshold = Math.max(sectionHeight * 0.05, 20)
 
     const inZone = centerPosition >= sectionEnd - threshold
-    console.log(`触发检测: 视口中心${centerPosition.toFixed(0)}px, 段落结束${sectionEnd.toFixed(0)}px, 阈值${threshold.toFixed(0)}px, 在区域=${inZone}`)
-
     return inZone
   }, [])
 
@@ -553,7 +551,6 @@ function PlaybackView({ score, onExit }) {
         const newSectionId = newSection?.id || null
 
         if (newSectionId !== currentSectionId) {
-          console.log(`进入段落: ${newSection?.name || '无'} (${newSectionId})`)
           setCurrentSectionId(newSectionId)
           revealIndicator()
         }
