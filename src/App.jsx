@@ -409,8 +409,13 @@ function PlaybackView({ score }) {
           navigateToLibrary()
         }}
         onWheel={handleReaderWheel}
-        onTouchStart={handleReaderTouchStart}
-        onTouchMove={handleReaderTouchMove}
+        onTouchStart={(event) => {
+          handleReaderTouchStart(event)
+          event.preventDefault()
+        }}
+        onTouchMove={(event) => {
+          handleReaderTouchMove(event)
+        }}
       >
         <div
           className="playback-controls"

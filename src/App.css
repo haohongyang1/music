@@ -303,8 +303,10 @@ input[type='range'] {
   gap: 0;
   overflow: hidden;
   background: #111;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
+  touch-action: pan-y;
   cursor: pointer;
+  -webkit-overflow-scrolling: touch;
 }
 
 .playback-controls {
