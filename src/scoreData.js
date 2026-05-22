@@ -36,6 +36,12 @@ const rawScores = [
       { src: redHighHeelsPage3, label: '第 3 页', focus: 'C 段延展、尾奏' },
       { src: redHighHeelsPage4, label: '第 4 页', focus: '尾奏收束' },
     ],
+    marks: [
+      { id: 'mark-a', name: 'A', ratio: 0 },
+      { id: 'mark-b', name: 'B', ratio: 0.27063829787234045 },
+      { id: 'mark-c', name: 'C', ratio: 0 }
+    ],
+    playOrder: 'A → B → C',
     sections: [
       { id: 'intro', name: '前奏', startRatio: 0, endRatio: 0.12 },
       { id: 'verse-a', name: 'A段', startRatio: 0.12, endRatio: 0.35 },
@@ -47,10 +53,10 @@ const rawScores = [
     repeats: [
       {
         type: 'segment',
-        startSection: 'verse-a',   // 反复起始段落
-        endSection: 'verse-b',     // 反复结束段落
-        jumpToSection: 'verse-a',  // 跳回目标
-        times: 2                    // 总播放次数
+        startSection: 'verse-a',
+        endSection: 'verse-b',
+        jumpToSection: 'verse-a',
+        times: 2
       }
     ]
   },
@@ -152,11 +158,13 @@ export function getAdjacentScores(scoreId) {
   }
 }
 
-export function getSectionAtPosition(position, maxScroll, sections) {
+export function getSectionAtPosition(position, maxScroll, clientHeight, sections) {
   if (!sections?.length) return null
 
   const maxScrollSafe = maxScroll || 1
-  const positionRatio = Math.min(1, Math.max(0, position / maxScrollSafe))
+  const scrollHeight = maxScrollSafe + (clientHeight || 0)
+  const centerPosition = position + (clientHeight || 0) / 2
+  const positionRatio = Math.min(1, Math.max(0, centerPosition / scrollHeight))
 
   return sections.find(s =>
     positionRatio >= s.startRatio &&

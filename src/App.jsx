@@ -8,6 +8,10 @@ import {
   ListMusic,
   Pause,
   Play,
+  FileText,
+  Download,
+  Trash2,
+  Plus,
 } from 'lucide-react'
 import './App.css'
 import {
@@ -56,6 +60,11 @@ function setScoreOffset(element, top) {
 function readRoute() {
   const hash = window.location.hash.replace(/^#/, '')
   const [, maybeScoreId] = hash.match(/^\/score\/([^/]+)$/) || []
+  const [, annotateScoreId] = hash.match(/^\/annotate\/([^/]+)$/) || []
+
+  if (annotateScoreId) {
+    return { view: 'annotate', scoreId: annotateScoreId }
+  }
 
   return maybeScoreId ? { view: 'score', scoreId: maybeScoreId } : { view: 'library' }
 }
@@ -66,6 +75,10 @@ function navigateToLibrary() {
 
 function navigateToScore(scoreId) {
   window.location.hash = `/score/${scoreId}`
+}
+
+function navigateToAnnotate(scoreId) {
+  window.location.hash = `/annotate/${scoreId}`
 }
 
 function readStoredSpeed(fallback) {
@@ -110,13 +123,20 @@ function App() {
   }, [])
 
   const selectedScore = route.view === 'score' ? getScoreById(route.scoreId) : null
+  const annotateScore = route.view === 'annotate' ? getScoreById(route.scoreId) : null
 
   if (route.view === 'score' && !selectedScore) {
     return <MissingScore scoreId={route.scoreId} />
   }
 
+  if (route.view === 'annotate' && !annotateScore) {
+    return <MissingScore scoreId={route.scoreId} />
+  }
+
   return selectedScore ? (
     <PlaybackView key={selectedScore.id} score={selectedScore} />
+  ) : annotateScore ? (
+    <AnnotationView key={annotateScore.id} score={annotateScore} />
   ) : (
     <LibraryView />
   )
@@ -211,7 +231,7 @@ function LibraryView() {
   )
 }
 
-function PlaybackView({ score }) {
+function PlaybackView({ score, onExit }) {
   const animationRef = useRef(0)
   const lastFrameRef = useRef(0)
   const scrollTopRef = useRef(0)
@@ -239,6 +259,27 @@ function PlaybackView({ score }) {
   })
 
   const sectionRepeatCountRef = useRef({})
+  const markJumpIndexRef = useRef(0)
+  const lastScrollTopRef = useRef(0)
+
+  // 解析播放顺序为配对
+  const parsePlayOrder = useCallback(() => {
+    if (!score.marks?.length || !score.playOrder) return null
+
+    const order = score.playOrder.split('→').map(s => s.trim())
+    const pairs = []
+
+    for (let i = 0; i < order.length - 1; i++) {
+      const start = order[i]
+      const end = order[i + 1]
+      pairs.push({ start, end })
+    }
+
+    // 保存完整的顺序用于后续跳转
+    return { pairs, order }
+  }, [score.marks, score.playOrder])
+
+  const playPairs = parsePlayOrder()
 
   const setReaderOffset = useCallback((top) => {
     const target = getScrollTarget(readerRef.current)
@@ -281,32 +322,57 @@ function PlaybackView({ score }) {
     setShowControls(true)
   }, [])
 
-  const isInTriggerZone = useCallback((currentPos, section, maxScroll) => {
+  const isInTriggerZone = useCallback((currentPos, section, maxScroll, clientHeight) => {
     const maxScrollSafe = maxScroll || 1
-    const sectionStart = section.startRatio * maxScrollSafe
-    const sectionEnd = section.endRatio * maxScrollSafe
+    const scrollHeight = maxScrollSafe + (clientHeight || 0)
+    const centerPosition = currentPos + (clientHeight || 0) / 2
+
+    const sectionStart = section.startRatio * scrollHeight
+    const sectionEnd = section.endRatio * scrollHeight
     const sectionHeight = sectionEnd - sectionStart
     const threshold = Math.max(sectionHeight * 0.05, 20)
 
-    return currentPos >= sectionEnd - threshold
+    const inZone = centerPosition >= sectionEnd - threshold
+    console.log(`触发检测: 视口中心${centerPosition.toFixed(0)}px, 段落结束${sectionEnd.toFixed(0)}px, 阈值${threshold.toFixed(0)}px, 在区域=${inZone}`)
+
+    return inZone
   }, [])
 
-  const shouldTriggerRepeat = useCallback((currentPos, maxScroll) => {
-    if (skipRepeat) return false
-    if (!score.sections?.length || !score.repeats?.length) return false
+  const shouldTriggerRepeat = useCallback((currentPos, maxScroll, clientHeight) => {
+    if (skipRepeat) {
+      console.log('跳过反复模式已启用')
+      return false
+    }
+    if (!score.sections?.length) {
+      console.log('没有段落数据')
+      return false
+    }
+    if (!score.repeats?.length) {
+      console.log('没有反复规则数据')
+      return false
+    }
 
-    const section = getSectionAtPosition(currentPos, maxScroll, score.sections)
+    const section = getSectionAtPosition(currentPos, maxScroll, clientHeight, score.sections)
     if (!section) return false
 
     // 查找当前段落作为结束段落的所有反复规则
     const repeat = score.repeats.find(r => r.endSection === section.id)
     if (!repeat) return false
 
-    if (!isInTriggerZone(currentPos, section, maxScroll)) return false
+    if (!isInTriggerZone(currentPos, section, maxScroll, clientHeight)) return false
 
     // 使用 startSection 作为计数 key
     const repeatKey = `${repeat.startSection}-${repeat.endSection}`
     const currentCount = sectionRepeatCountRef.current[repeatKey] || 0
+
+    console.log('=== 反复触发检测 ===')
+    console.log(`当前位置: ${currentPos.toFixed(0)}px / ${maxScroll.toFixed(0)}px`)
+    console.log(`当前段落: ${section.name} (${section.id})`)
+    console.log(`段落范围: ${(section.startRatio * 100).toFixed(1)}% - ${(section.endRatio * 100).toFixed(1)}%`)
+    console.log(`反复规则: ${repeat.startSection} -> ${repeat.endSection}, 跳转: ${repeat.jumpToSection}, 次数: ${repeat.times}`)
+    console.log(`已播放次数: ${currentCount}`)
+    console.log('===================')
+
     return currentCount < repeat.times
   }, [skipRepeat, score.sections, score.repeats, isInTriggerZone])
 
@@ -376,6 +442,18 @@ function PlaybackView({ score }) {
       setCountdown((current) => {
         if (current <= 1) {
           window.clearInterval(countdownTimerRef.current)
+
+          // 初始化标记点跳转
+          markJumpIndexRef.current = 0
+          if (playPairs?.order?.length && score.marks?.length && readerRef.current) {
+            const firstTargetName = playPairs.order[0]
+            const firstMark = score.marks.find(m => m.name === firstTargetName)
+            if (firstMark) {
+              console.log(`从标记点 ${firstTargetName} 开始播放 (位置 ${(firstMark.ratio * 100).toFixed(2)}%)`)
+              setReaderOffset(firstMark.ratio * getScrollTarget(readerRef.current).max)
+            }
+          }
+
           setIsPlaying(true)
           return 0
         }
@@ -385,7 +463,7 @@ function PlaybackView({ score }) {
     }, 1000)
 
     return () => window.clearInterval(countdownTimerRef.current)
-  }, [score.id])
+  }, [score.id, playPairs, score.marks, setReaderOffset])
 
   useEffect(
     () => () => {
@@ -421,16 +499,66 @@ function PlaybackView({ score }) {
 
       const currentPos = nextTop
 
+      // 检测滚动方向：只有从小往大（正常播放）才触发跳转
+      const isPlayingForward = currentPos > lastScrollTopRef.current
+      lastScrollTopRef.current = currentPos
+
+      // 标记点跳转逻辑
+      if (playPairs?.order?.length && score.marks?.length && isPlayingForward) {
+        const currentTargetIndex = markJumpIndexRef.current
+
+        // 只有奇数索引的点才是触发点（1, 3, 5...）
+        const triggerIndex = currentTargetIndex * 2 + 1
+        if (triggerIndex < playPairs.order.length) {
+          const triggerName = playPairs.order[triggerIndex]
+          const triggerMark = score.marks.find(m => m.name === triggerName)
+
+          if (triggerMark) {
+            const triggerPosition = triggerMark.ratio * target.max
+            const threshold = 20
+
+            if (currentPos >= triggerPosition - threshold && currentPos <= triggerPosition + 100) {
+              // 到达触发点，跳转到下一个点
+              const nextIndex = triggerIndex + 1
+              if (nextIndex < playPairs.order.length) {
+                const nextName = playPairs.order[nextIndex]
+                const nextMark = score.marks.find(m => m.name === nextName)
+                if (nextMark) {
+                  console.log(`=== 标记点跳转 ===`)
+                  console.log(`触发点: ${triggerName} → 跳转到: ${nextName}`)
+                  console.log(`跳转位置: ${(nextMark.ratio * 100).toFixed(2)}%`)
+                  console.log(`===================`)
+
+                  markJumpIndexRef.current = currentTargetIndex + 1
+                  const jumpPosition = nextMark.ratio * target.max
+                  nextTop = jumpPosition
+                  scrollTopRef.current = jumpPosition
+                  lastScrollTopRef.current = jumpPosition - 1  // 确保下一帧 isPlayingForward 为 true
+                }
+              } else {
+                console.log(`播放顺序完成，继续播放到结束`)
+                markJumpIndexRef.current = -1
+              }
+            }
+          }
+        } else {
+          console.log(`播放顺序完成，继续播放到结束`)
+          markJumpIndexRef.current = -1
+        }
+      }
+
+      // 段落显示逻辑（保持向后兼容）
       if (score.sections?.length) {
-        const newSection = getSectionAtPosition(currentPos, target.max, score.sections)
+        const newSection = getSectionAtPosition(currentPos, target.max, readerRef.current?.clientHeight, score.sections)
         const newSectionId = newSection?.id || null
 
         if (newSectionId !== currentSectionId) {
+          console.log(`进入段落: ${newSection?.name || '无'} (${newSectionId})`)
           setCurrentSectionId(newSectionId)
           revealIndicator()
         }
 
-        if (newSection && shouldTriggerRepeat(currentPos, target.max)) {
+        if (newSection && shouldTriggerRepeat(currentPos, target.max, readerRef.current?.clientHeight)) {
           const jumpResult = executeRepeat(newSection, target.max)
 
           if (jumpResult) {
@@ -454,6 +582,8 @@ function PlaybackView({ score }) {
     setReaderOffset,
     score.sections,
     score.repeats,
+    score.marks,
+    playPairs,
     currentSectionId,
     shouldTriggerRepeat,
     executeRepeat,
@@ -524,6 +654,27 @@ function PlaybackView({ score }) {
   )
 
   const getSectionDisplay = () => {
+    // 优先显示标记点信息
+    if (playPairs?.order?.length && score.marks?.length) {
+      const currentTargetIndex = markJumpIndexRef.current
+
+      if (currentTargetIndex >= 0 && currentTargetIndex < playPairs.order.length) {
+        const current = playPairs.order[currentTargetIndex]
+        const next = playPairs.order[currentTargetIndex + 1]
+
+        let display = `${current} → ${next}`
+
+        if (!next) {
+          display += ` → 结束`
+        }
+
+        return display
+      } else if (currentTargetIndex === -1) {
+        return '播放完成'
+      }
+    }
+
+    // 向后兼容：显示段落信息
     if (!currentSectionId) return null
     const section = score.sections.find(s => s.id === currentSectionId)
     if (!section) return null
@@ -665,6 +816,17 @@ function PlaybackView({ score }) {
                   {showSectionIndicator ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
               )}
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  className="playback-option-annotate"
+                  onClick={() => navigateToAnnotate(score.id)}
+                  aria-label="标注段落"
+                >
+                  <FileText size={16} />
+                  标注
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -689,10 +851,291 @@ function PlaybackView({ score }) {
       <button
         type="button"
         className="screen-reader-return"
-        onClick={navigateToLibrary}
+        onClick={onExit || navigateToLibrary}
       >
         返回列表
       </button>
+    </main>
+  )
+}
+
+function AnnotationView({ score }) {
+  const readerRef = useRef(null)
+  const [loading, setLoading] = useState(true)
+  const [draftKey, setDraftKey] = useState(null)
+  const [marks, setMarks] = useState([])
+  const [playOrder, setPlayOrder] = useState('')
+  const [currentRatio, setCurrentRatio] = useState(0)
+  const [previewMode, setPreviewMode] = useState(false)
+
+  const scrollTopRef = useRef(0)
+
+  const computeScoreHash = useCallback(async () => {
+    const firstImageSrc = score.pages[0].src
+
+    let buffer
+    if (firstImageSrc.startsWith('/')) {
+      const img = new Image()
+      img.src = firstImageSrc
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve))
+      buffer = await blob.arrayBuffer()
+    } else {
+      const response = await fetch(firstImageSrc)
+      const blob = await response.blob()
+      buffer = await blob.arrayBuffer()
+    }
+
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16)
+  }, [score.pages])
+
+  useEffect(() => {
+    computeScoreHash().then(hash => {
+      const key = `score-annotation-draft-${score.id}-${hash}`
+      setDraftKey(key)
+      setLoading(false)
+
+      const saved = window.localStorage.getItem(key)
+      if (saved) {
+        try {
+          const data = JSON.parse(saved)
+          setMarks(data.marks || [])
+          setPlayOrder(data.playOrder || '')
+        } catch (e) {
+          console.warn('Failed to parse saved draft', e)
+        }
+      }
+    }).catch(err => {
+      console.warn('Failed to compute hash, using fallback', err)
+      const fallbackKey = `score-annotation-draft-${score.id}-fallback`
+      setDraftKey(fallbackKey)
+      setLoading(false)
+
+      const saved = window.localStorage.getItem(fallbackKey)
+      if (saved) {
+        try {
+          const data = JSON.parse(saved)
+          setMarks(data.marks || [])
+          setPlayOrder(data.playOrder || '')
+        } catch (e) {
+          console.warn('Failed to parse saved draft', e)
+        }
+      }
+    })
+  }, [score.id, computeScoreHash])
+
+  useEffect(() => {
+    if (draftKey) {
+      window.localStorage.setItem(draftKey, JSON.stringify({ marks, playOrder }))
+    }
+  }, [draftKey, marks, playOrder])
+
+  const getCurrentRatio = useCallback((scrollTop, maxScroll) => {
+    if (maxScroll <= 0) return 0
+    return Math.min(1, Math.max(0, scrollTop / maxScroll))
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    if (!readerRef.current) return
+    const maxScroll = readerRef.current.scrollHeight - readerRef.current.clientHeight
+    const scrollTop = readerRef.current.scrollTop
+    const ratio = getCurrentRatio(scrollTop, maxScroll)
+    setCurrentRatio(ratio)
+    scrollTopRef.current = scrollTop
+  }, [getCurrentRatio])
+
+  useEffect(() => {
+    const reader = readerRef.current
+    console.log('绑定滚动事件，readerRef:', reader)
+    if (reader) {
+      console.log('reader scrollHeight:', reader.scrollHeight, 'clientHeight:', reader.clientHeight)
+      reader.addEventListener('scroll', handleScroll)
+      return () => reader.removeEventListener('scroll', handleScroll)
+    }
+  }, [handleScroll, loading])
+
+  const addMark = useCallback(() => {
+    const markNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    const usedNames = marks.map(m => m.name)
+    const nextName = markNames.find(n => !usedNames.includes(n)) || `点${marks.length + 1}`
+
+    console.log('=== 添加标记点 ===')
+    console.log(`视口中心位置: ${(currentRatio * 100).toFixed(2)}%`)
+    console.log(`标记名称: ${nextName}`)
+
+    const newMark = {
+      id: `mark-${Date.now()}`,
+      name: nextName,
+      ratio: currentRatio
+    }
+
+    setMarks([...marks, newMark])  // 不排序，保持添加顺序
+
+    // 自动更新播放顺序
+    const orderNames = marks.map(m => m.name)
+    setPlayOrder([...orderNames, nextName].join(' → '))
+    console.log('================')
+  }, [marks, currentRatio])
+
+  const deleteMark = useCallback((markId) => {
+    const updated = marks.filter(m => m.id !== markId)
+    setMarks(updated)
+    setPlayOrder(updated.map(m => m.name).join(' → '))
+  }, [marks])
+
+  const exportJSON = useCallback(() => {
+    const data = {
+      marks: marks.map(m => ({
+        id: m.id,
+        name: m.name,
+        ratio: parseFloat(m.ratio.toFixed(4))
+      })),
+      playOrder: playOrder
+    }
+    console.log('=== 导出 JSON ===')
+    console.log(JSON.stringify(data, null, 2))
+    console.log('=================')
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+    alert('已复制到剪贴板，粘贴到 scoreData.js')
+  }, [marks, playOrder])
+
+  const clearAll = useCallback(() => {
+    setMarks([])
+    setPlayOrder('')
+  }, [])
+
+  if (loading) {
+    return (
+      <main className="annotation-shell">
+        <div className="annotation-loading">加载标注草稿...</div>
+      </main>
+    )
+  }
+
+  if (previewMode) {
+    const previewScore = { ...score, marks, playOrder }
+    return <PlaybackView key={previewScore.id} score={previewScore} onExit={() => setPreviewMode(false)} />
+  }
+
+  return (
+    <main className="annotation-shell">
+      <header className="annotation-header">
+        <button type="button" className="annotation-back" onClick={navigateToLibrary}>
+          <ArrowLeft size={18} />
+          返回
+        </button>
+        <h1>标注模式 - {score.title}</h1>
+      </header>
+
+      <section
+        className="score-reader"
+        ref={readerRef}
+        aria-label={`${score.title} 乐谱`}
+      >
+        {score.pages.map((page, index) => (
+          <figure className="score-page" key={page.src}>
+            <img
+              id={`${score.id}-page-${index + 1}`}
+              src={page.src}
+              alt={`${score.title} ${page.label}`}
+            />
+          </figure>
+        ))}
+      </section>
+
+      <aside className="annotation-panel">
+        <div className="annotation-panel-header">
+          <h2>标记点</h2>
+          <span className="current-position">{(currentRatio * 100).toFixed(1)}%</span>
+        </div>
+
+        <div className="mark-list">
+          {marks.length === 0 ? (
+            <p className="empty-message">暂无标记点，滚动乐谱后点击下方按钮添加</p>
+          ) : (
+            marks.map(mark => (
+              <div key={mark.id} className="mark-card">
+                <div className="mark-header">
+                  <span className="mark-name">{mark.name}</span>
+                  <button
+                    type="button"
+                    className="mark-delete"
+                    onClick={() => deleteMark(mark.id)}
+                    aria-label="删除标记"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <div className="mark-position">
+                  位置: {(mark.ratio * 100).toFixed(2)}%
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="annotation-add-mark"
+          onClick={addMark}
+        >
+          <Plus size={16} />
+          在当前位置添加标记
+        </button>
+
+        <div className="play-order-section">
+          <label>播放顺序（用 → 分隔）</label>
+          <input
+            type="text"
+            className="play-order-input"
+            value={playOrder}
+            onChange={(e) => setPlayOrder(e.target.value)}
+            placeholder="例如: A → B → A → B → C → D"
+          />
+          <p className="play-order-hint">输入标记点名称，用 → 连接</p>
+        </div>
+
+        <div className="annotation-panel-footer">
+          <button
+            type="button"
+            className="annotation-button annotation-preview"
+            onClick={() => setPreviewMode(true)}
+            disabled={marks.length === 0}
+          >
+            <Play size={16} />
+            预览播放
+          </button>
+          <button
+            type="button"
+            className="annotation-button annotation-export"
+            onClick={exportJSON}
+            disabled={marks.length === 0}
+          >
+            <Download size={16} />
+            导出 JSON
+          </button>
+          <button
+            type="button"
+            className="annotation-button annotation-clear"
+            onClick={clearAll}
+          >
+            <Trash2 size={16} />
+            清空
+          </button>
+        </div>
+      </aside>
     </main>
   )
 }
