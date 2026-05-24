@@ -23,7 +23,6 @@ import {
   getNextSection,
   STORAGE_KEYS,
 } from './scoreData'
-import { fetchAnnotation, saveAnnotation } from './api.js'
 
 const SPEED_STORAGE_KEY = 'score-autoplay-speed'
 const DEFAULT_SPEED = 18
@@ -260,7 +259,7 @@ function PlaybackView({ score, onExit }) {
     return stored !== 'false'
   })
 
-  // 从 API 加载的标注数据
+  // 从 localStorage 加载标注数据
   const [marks, setMarks] = useState(score.marks || [])
   const [playOrder, setPlayOrder] = useState(score.playOrder || '')
 
@@ -270,14 +269,19 @@ function PlaybackView({ score, onExit }) {
 
   // 加载标注数据
   useEffect(() => {
-    fetchAnnotation(score.id)
-      .then(data => {
+    const storageKey = `score-annotations-${score.id}`
+    const saved = window.localStorage.getItem(storageKey)
+    if (saved) {
+      try {
+        const data = JSON.parse(saved)
         if (data.marks?.length) {
           setMarks(data.marks)
           setPlayOrder(data.playOrder || '')
         }
-      })
-      .catch(err => console.error('加载标注数据失败:', err))
+      } catch (e) {
+        console.warn('Failed to parse saved annotations', e)
+      }
+    }
   }, [score.id])
 
   // 解析播放顺序为配对
@@ -891,28 +895,24 @@ function AnnotationView({ score }) {
   }, [])
 
   useEffect(() => {
-    fetchAnnotation(score.id)
-      .then(data => {
+    const storageKey = `score-annotations-${score.id}`
+    const saved = window.localStorage.getItem(storageKey)
+    if (saved) {
+      try {
+        const data = JSON.parse(saved)
         setMarks(data.marks || [])
         setPlayOrder(data.playOrder || '')
-        setLoading(false)
-      })
-      .catch(err => {
-        console.error('加载标注数据失败:', err)
-        setLoading(false)
-      })
+      } catch (e) {
+        console.warn('Failed to parse saved annotations', e)
+      }
+    }
+    setLoading(false)
   }, [score.id])
 
   useEffect(() => {
-    const saveTimeout = setTimeout(() => {
-      if (!loading) {
-        saveAnnotation(score.id, marks, playOrder)
-          .catch(err => console.error('保存标注数据失败:', err))
-      }
-    }, 500)
-
-    return () => clearTimeout(saveTimeout)
-  }, [score.id, marks, playOrder, loading])
+    const storageKey = `score-annotations-${score.id}`
+    window.localStorage.setItem(storageKey, JSON.stringify({ marks, playOrder }))
+  }, [score.id, marks, playOrder])
 
   const handleScroll = useCallback(() => {
     if (!readerRef.current) return

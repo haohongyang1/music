@@ -8,6 +8,9 @@ import shengXiaDeGuoShiPage1 from './assets/imgs/sheng-xia-de-guo-shi-01.jpg'
 import daoJiangXingPage1 from './assets/imgs/dao-jiang-xing-01.jpg'
 import daoJiangXingPage2 from './assets/imgs/dao-jiang-xing-02.jpg'
 import daoJiangXingPage3 from './assets/imgs/dao-jiang-xing-03.jpg'
+import dangAiZaiKaoJinPage1 from './assets/imgs/dang-ai-zai-kao-jin-01.jpg'
+import liXiangSanXunPage1 from './assets/imgs/li-xiang-san-xun-01.png'
+import nuanNuanPage1 from './assets/imgs/nuan-nuan-01.jpg'
 
 export const STORAGE_KEYS = {
   SPEED: 'score-autoplay-speed',
@@ -36,8 +39,16 @@ const rawScores = [
       { src: redHighHeelsPage3, label: '第 3 页', focus: 'C 段延展、尾奏' },
       { src: redHighHeelsPage4, label: '第 4 页', focus: '尾奏收束' },
     ],
-    marks: [],
-    playOrder: '',
+    marks: [
+      { id: 'mark-1779614186516', name: 'A', ratio: 0 },
+      { id: 'mark-1779614189334', name: 'B', ratio: 0.06770159551530833 },
+      { id: 'mark-1779614190825', name: 'C', ratio: 0 },
+      { id: 'mark-1779614197700', name: 'D', ratio: 0.3208279430789133 },
+      { id: 'mark-1779614201750', name: 'E', ratio: 0 },
+      { id: 'mark-1779614204821', name: 'F', ratio: 0.07072013799051315 },
+      { id: 'mark-1779614206212', name: 'G', ratio: 0 },
+    ],
+    playOrder: 'A → B → C → D → E → F → G',
     sections: [
       { id: 'intro', name: '前奏', startRatio: 0, endRatio: 0.12 },
       { id: 'verse-a', name: 'A段', startRatio: 0.12, endRatio: 0.35 },
@@ -115,6 +126,60 @@ const rawScores = [
     pages: [
       { src: huGuangShengPage1, label: '第 1 页', focus: '前奏、主歌与第一段推进' },
       { src: huGuangShengPage2, label: '第 2 页', focus: '后半段反复与结尾' },
+    ],
+  },
+  {
+    id: 'dang-ai-zai-kao-jin',
+    title: '当爱在靠近',
+    artist: '刘若英',
+    arranger: '未标注',
+    originalKey: '未标注',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'D',
+    sortKey: 'dang ai zai kao jin',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片内容识别',
+    summary:
+      '一页吉他弹唱谱，适合弹唱练习。',
+    pages: [
+      { src: dangAiZaiKaoJinPage1, label: '第 1 页', focus: '完整曲谱' },
+    ],
+  },
+  {
+    id: 'li-xiang-san-xun',
+    title: '理想三旬',
+    artist: '陈鸿宇',
+    arranger: '未标注',
+    originalKey: '未标注',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'L',
+    sortKey: 'li xiang san xun',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片内容识别',
+    summary:
+      '一页吉他弹唱谱，适合弹唱练习。',
+    pages: [
+      { src: liXiangSanXunPage1, label: '第 1 页', focus: '完整曲谱' },
+    ],
+  },
+  {
+    id: 'nuan-nuan',
+    title: '暖暖',
+    artist: '梁静茹',
+    arranger: '未标注',
+    originalKey: '未标注',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'N',
+    sortKey: 'nuan nuan',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片内容识别',
+    summary:
+      '一页吉他弹唱谱，适合弹唱练习。',
+    pages: [
+      { src: nuanNuanPage1, label: '第 1 页', focus: '完整曲谱' },
     ],
   },
 ]
