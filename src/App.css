@@ -786,6 +786,37 @@ input[type='range'] {
   background: var(--surface);
 }
 
+@media (max-width: 900px) {
+  .annotation-shell {
+    grid-auto-flow: column;
+    grid-template-columns: minmax(100vw, 1fr) 280px;
+    grid-template-rows: auto 1fr;
+    overflow-x: auto;
+    overscroll-behavior: x contain;
+  }
+
+  .annotation-header {
+    grid-column: 1 / -1;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface);
+  }
+
+  .annotation-shell .score-reader {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .annotation-panel {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    border-left: 1px solid var(--border);
+    border-top: none;
+    max-height: 100svh;
+  }
+}
+
 .annotation-loading {
   grid-column: 1 / -1;
   display: grid;
@@ -1430,25 +1461,5 @@ input[type='range'] {
   .annotation-panel-footer {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 6px;
-  }
-}
-
-@media (max-width: 900px) {
-  .annotation-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-  }
-
-  .annotation-shell .score-reader {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .annotation-panel {
-    grid-column: 1;
-    grid-row: 3;
-    max-height: 40svh;
-    border-left: none;
-    border-top: 1px solid var(--border);
   }
 }

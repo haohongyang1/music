@@ -23,6 +23,7 @@ import {
   getNextSection,
   STORAGE_KEYS,
 } from './scoreData'
+import { fetchAnnotation, saveAnnotation } from './api.js'
 
 const SPEED_STORAGE_KEY = 'score-autoplay-speed'
 const DEFAULT_SPEED = 18
@@ -259,15 +260,31 @@ function PlaybackView({ score, onExit }) {
     return stored !== 'false'
   })
 
+  // 从 API 加载的标注数据
+  const [marks, setMarks] = useState(score.marks || [])
+  const [playOrder, setPlayOrder] = useState(score.playOrder || '')
+
   const sectionRepeatCountRef = useRef({})
   const markJumpIndexRef = useRef(0)
   const lastScrollTopRef = useRef(0)
 
+  // 加载标注数据
+  useEffect(() => {
+    fetchAnnotation(score.id)
+      .then(data => {
+        if (data.marks?.length) {
+          setMarks(data.marks)
+          setPlayOrder(data.playOrder || '')
+        }
+      })
+      .catch(err => console.error('加载标注数据失败:', err))
+  }, [score.id])
+
   // 解析播放顺序为配对
   const parsePlayOrder = useCallback(() => {
-    if (!score.marks?.length || !score.playOrder) return null
+    if (!marks?.length || !playOrder) return null
 
-    const order = score.playOrder.split('→').map(s => s.trim())
+    const order = playOrder.split('→').map(s => s.trim())
     const pairs = []
 
     for (let i = 0; i < order.length - 1; i++) {
@@ -278,7 +295,7 @@ function PlaybackView({ score, onExit }) {
 
     // 保存完整的顺序用于后续跳转
     return { pairs, order }
-  }, [score.marks, score.playOrder])
+  }, [marks, playOrder])
 
   const playPairs = parsePlayOrder()
 
@@ -444,9 +461,9 @@ function PlaybackView({ score, onExit }) {
 
           // 初始化标记点跳转
           markJumpIndexRef.current = 0
-          if (playPairs?.order?.length && score.marks?.length && readerRef.current) {
+          if (playPairs?.order?.length && marks?.length && readerRef.current) {
             const firstTargetName = playPairs.order[0]
-            const firstMark = score.marks.find(m => m.name === firstTargetName)
+            const firstMark = marks.find(m => m.name === firstTargetName)
             if (firstMark) {
               console.log(`从标记点 ${firstTargetName} 开始播放 (位置 ${(firstMark.ratio * 100).toFixed(2)}%)`)
               setReaderOffset(firstMark.ratio * getScrollTarget(readerRef.current).max)
@@ -462,7 +479,7 @@ function PlaybackView({ score, onExit }) {
     }, 1000)
 
     return () => window.clearInterval(countdownTimerRef.current)
-  }, [score.id, playPairs, score.marks, setReaderOffset])
+  }, [score.id, playPairs, marks, setReaderOffset])
 
   useEffect(
     () => () => {
@@ -503,14 +520,14 @@ function PlaybackView({ score, onExit }) {
       lastScrollTopRef.current = currentPos
 
       // 标记点跳转逻辑
-      if (playPairs?.order?.length && score.marks?.length && isPlayingForward) {
+      if (playPairs?.order?.length && marks?.length && isPlayingForward) {
         const currentTargetIndex = markJumpIndexRef.current
 
         // 只有奇数索引的点才是触发点（1, 3, 5...）
         const triggerIndex = currentTargetIndex * 2 + 1
         if (triggerIndex < playPairs.order.length) {
           const triggerName = playPairs.order[triggerIndex]
-          const triggerMark = score.marks.find(m => m.name === triggerName)
+          const triggerMark = marks.find(m => m.name === triggerName)
 
           if (triggerMark) {
             const triggerPosition = triggerMark.ratio * target.max
@@ -521,7 +538,7 @@ function PlaybackView({ score, onExit }) {
               const nextIndex = triggerIndex + 1
               if (nextIndex < playPairs.order.length) {
                 const nextName = playPairs.order[nextIndex]
-                const nextMark = score.marks.find(m => m.name === nextName)
+                const nextMark = marks.find(m => m.name === nextName)
                 // 只有从大到小时才触发跳转
                 if (nextMark && triggerMark.ratio > nextMark.ratio) {
                   console.log(`=== 标记点跳转 ===`)
@@ -548,7 +565,7 @@ function PlaybackView({ score, onExit }) {
       }
 
       // 段落显示逻辑（保持向后兼容，但与标记点互斥）
-      if (score.sections?.length && !score.marks?.length) {
+      if (score.sections?.length && !marks?.length) {
         const newSection = getSectionAtPosition(currentPos, target.max, readerRef.current?.clientHeight, score.sections)
         const newSectionId = newSection?.id || null
 
@@ -581,7 +598,7 @@ function PlaybackView({ score, onExit }) {
     setReaderOffset,
     score.sections,
     score.repeats,
-    score.marks,
+    marks,
     playPairs,
     currentSectionId,
     shouldTriggerRepeat,
@@ -654,7 +671,7 @@ function PlaybackView({ score, onExit }) {
 
   const getSectionDisplay = () => {
     // 优先显示标记点信息
-    if (playPairs?.order?.length && score.marks?.length) {
+    if (playPairs?.order?.length && marks?.length) {
       const currentTargetIndex = markJumpIndexRef.current
 
       if (currentTargetIndex >= 0 && currentTargetIndex < playPairs.order.length) {
@@ -861,7 +878,6 @@ function PlaybackView({ score, onExit }) {
 function AnnotationView({ score }) {
   const readerRef = useRef(null)
   const [loading, setLoading] = useState(true)
-  const [draftKey, setDraftKey] = useState(null)
   const [marks, setMarks] = useState([])
   const [playOrder, setPlayOrder] = useState('')
   const [currentRatio, setCurrentRatio] = useState(0)
@@ -869,82 +885,34 @@ function AnnotationView({ score }) {
 
   const scrollTopRef = useRef(0)
 
-  const computeScoreHash = useCallback(async () => {
-    const firstImageSrc = score.pages[0].src
-
-    let buffer
-    if (firstImageSrc.startsWith('/')) {
-      const img = new Image()
-      img.src = firstImageSrc
-      await new Promise((resolve, reject) => {
-        img.onload = resolve
-        img.onerror = reject
-      })
-
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0)
-
-      const blob = await new Promise(resolve => canvas.toBlob(resolve))
-      buffer = await blob.arrayBuffer()
-    } else {
-      const response = await fetch(firstImageSrc)
-      const blob = await response.blob()
-      buffer = await blob.arrayBuffer()
-    }
-
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16)
-  }, [score.pages])
-
-  useEffect(() => {
-    computeScoreHash().then(hash => {
-      const key = `score-annotation-draft-${score.id}-${hash}`
-      setDraftKey(key)
-      setLoading(false)
-
-      const saved = window.localStorage.getItem(key)
-      if (saved) {
-        try {
-          const data = JSON.parse(saved)
-          setMarks(data.marks || [])
-          setPlayOrder(data.playOrder || '')
-        } catch (e) {
-          console.warn('Failed to parse saved draft', e)
-        }
-      }
-    }).catch(err => {
-      console.warn('Failed to compute hash, using fallback', err)
-      const fallbackKey = `score-annotation-draft-${score.id}-fallback`
-      setDraftKey(fallbackKey)
-      setLoading(false)
-
-      const saved = window.localStorage.getItem(fallbackKey)
-      if (saved) {
-        try {
-          const data = JSON.parse(saved)
-          setMarks(data.marks || [])
-          setPlayOrder(data.playOrder || '')
-        } catch (e) {
-          console.warn('Failed to parse saved draft', e)
-        }
-      }
-    })
-  }, [score.id, computeScoreHash])
-
-  useEffect(() => {
-    if (draftKey) {
-      window.localStorage.setItem(draftKey, JSON.stringify({ marks, playOrder }))
-    }
-  }, [draftKey, marks, playOrder])
-
   const getCurrentRatio = useCallback((scrollTop, maxScroll) => {
     if (maxScroll <= 0) return 0
     return Math.min(1, Math.max(0, scrollTop / maxScroll))
   }, [])
+
+  useEffect(() => {
+    fetchAnnotation(score.id)
+      .then(data => {
+        setMarks(data.marks || [])
+        setPlayOrder(data.playOrder || '')
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error('加载标注数据失败:', err)
+        setLoading(false)
+      })
+  }, [score.id])
+
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      if (!loading) {
+        saveAnnotation(score.id, marks, playOrder)
+          .catch(err => console.error('保存标注数据失败:', err))
+      }
+    }, 500)
+
+    return () => clearTimeout(saveTimeout)
+  }, [score.id, marks, playOrder, loading])
 
   const handleScroll = useCallback(() => {
     if (!readerRef.current) return
