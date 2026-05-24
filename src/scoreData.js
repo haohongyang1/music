@@ -37,11 +37,15 @@ const rawScores = [
       { src: redHighHeelsPage4, label: '第 4 页', focus: '尾奏收束' },
     ],
     marks: [
-      { id: 'mark-a', name: 'A', ratio: 0 },
-      { id: 'mark-b', name: 'B', ratio: 0.27063829787234045 },
-      { id: 'mark-c', name: 'C', ratio: 0 }
+      { id: 'mark-1779614186516', name: 'A', ratio: 0 },
+      { id: 'mark-1779614189334', name: 'B', ratio: 0.06770159551530833 },
+      { id: 'mark-1779614190825', name: 'C', ratio: 0 },
+      { id: 'mark-1779614197700', name: 'D', ratio: 0.3208279430789133 },
+      { id: 'mark-1779614201750', name: 'E', ratio: 0 },
+      { id: 'mark-1779614204821', name: 'F', ratio: 0.07072013799051315 },
+      { id: 'mark-1779614206212', name: 'G', ratio: 0 },
     ],
-    playOrder: 'A → B → C',
+    playOrder: 'A → B → C → D → E → F → G',
     sections: [
       { id: 'intro', name: '前奏', startRatio: 0, endRatio: 0.12 },
       { id: 'verse-a', name: 'A段', startRatio: 0.12, endRatio: 0.35 },

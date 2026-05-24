@@ -12,6 +12,7 @@ import {
   Download,
   Trash2,
   Plus,
+  MapPin,
 } from 'lucide-react'
 import './App.css'
 import {
@@ -521,7 +522,8 @@ function PlaybackView({ score, onExit }) {
               if (nextIndex < playPairs.order.length) {
                 const nextName = playPairs.order[nextIndex]
                 const nextMark = score.marks.find(m => m.name === nextName)
-                if (nextMark) {
+                // 只有从大到小时才触发跳转
+                if (nextMark && triggerMark.ratio > nextMark.ratio) {
                   console.log(`=== 标记点跳转 ===`)
                   console.log(`触发点: ${triggerName} → 跳转到: ${nextName}`)
                   console.log(`跳转位置: ${(nextMark.ratio * 100).toFixed(2)}%`)
@@ -986,6 +988,14 @@ function AnnotationView({ score }) {
     console.log('================')
   }, [marks, currentRatio])
 
+  const updateMark = useCallback((markId) => {
+    const updated = marks.map(m =>
+      m.id === markId ? { ...m, ratio: currentRatio } : m
+    )
+    setMarks(updated)
+    // playOrder 不需要改变，因为名称和顺序不变
+  }, [marks, currentRatio])
+
   const deleteMark = useCallback((markId) => {
     const updated = marks.filter(m => m.id !== markId)
     setMarks(updated)
@@ -1063,17 +1073,43 @@ function AnnotationView({ score }) {
             <p className="empty-message">暂无标记点，滚动乐谱后点击下方按钮添加</p>
           ) : (
             marks.map(mark => (
-              <div key={mark.id} className="mark-card">
+              <div
+                key={mark.id}
+                className="mark-card"
+                onClick={() => {
+                  if (readerRef.current) {
+                    const targetScroll = mark.ratio * (readerRef.current.scrollHeight - readerRef.current.clientHeight)
+                    readerRef.current.scrollTop = targetScroll
+                  }
+                }}
+              >
                 <div className="mark-header">
                   <span className="mark-name">{mark.name}</span>
-                  <button
-                    type="button"
-                    className="mark-delete"
-                    onClick={() => deleteMark(mark.id)}
-                    aria-label="删除标记"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="mark-actions">
+                    <button
+                      type="button"
+                      className="mark-update"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        updateMark(mark.id)
+                      }}
+                      aria-label="更新位置到当前位置"
+                      title={`更新 B 点到当前位置 ${(currentRatio * 100).toFixed(1)}%`}
+                    >
+                      <MapPin size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="mark-delete"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteMark(mark.id)
+                      }}
+                      aria-label="删除标记"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div className="mark-position">
                   位置: {(mark.ratio * 100).toFixed(2)}%
