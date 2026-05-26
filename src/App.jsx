@@ -29,6 +29,7 @@ const DEFAULT_SPEED = 18
 const MIN_SPEED = 8
 const MAX_SPEED = 36
 const COUNTDOWN_SECONDS = 3
+const ENABLE_ANNOTATION = import.meta.env.VITE_ENABLE_ANNOTATION !== 'false'
 
 function setWindowScrollTop(top, behavior = 'auto') {
   if (behavior === 'smooth') {
@@ -91,6 +92,32 @@ function readStoredSpeed(fallback) {
   }
 
   return Math.min(MAX_SPEED, Math.max(MIN_SPEED, parsed))
+}
+
+function readStoredAnnotations(score, fallback = { marks: [], playOrder: '' }, options = {}) {
+  const storageKey = `score-annotations-${score.id}`
+  const saved = window.localStorage.getItem(storageKey)
+
+  if (!saved) {
+    return fallback
+  }
+
+  try {
+    const data = JSON.parse(saved)
+    const marks = Array.isArray(data?.marks) ? data.marks : []
+
+    if (options.requireMarks && marks.length === 0) {
+      return fallback
+    }
+
+    return {
+      marks,
+      playOrder: data?.playOrder || '',
+    }
+  } catch (e) {
+    console.warn('Failed to parse saved annotations', e)
+    return fallback
+  }
 }
 
 function getScrollTarget(element) {
@@ -259,30 +286,22 @@ function PlaybackView({ score, onExit }) {
     return stored !== 'false'
   })
 
-  // 从 localStorage 加载标注数据
-  const [marks, setMarks] = useState(score.marks || [])
-  const [playOrder, setPlayOrder] = useState(score.playOrder || '')
+  const [initialAnnotations] = useState(() =>
+    readStoredAnnotations(
+      score,
+      {
+        marks: score.marks || [],
+        playOrder: score.playOrder || '',
+      },
+      { requireMarks: true },
+    ),
+  )
+  const [marks] = useState(initialAnnotations.marks)
+  const [playOrder] = useState(initialAnnotations.playOrder)
 
   const sectionRepeatCountRef = useRef({})
   const markJumpIndexRef = useRef(0)
   const lastScrollTopRef = useRef(0)
-
-  // 加载标注数据
-  useEffect(() => {
-    const storageKey = `score-annotations-${score.id}`
-    const saved = window.localStorage.getItem(storageKey)
-    if (saved) {
-      try {
-        const data = JSON.parse(saved)
-        if (data.marks?.length) {
-          setMarks(data.marks)
-          setPlayOrder(data.playOrder || '')
-        }
-      } catch (e) {
-        console.warn('Failed to parse saved annotations', e)
-      }
-    }
-  }, [score.id])
 
   // 解析播放顺序为配对
   const parsePlayOrder = useCallback(() => {
@@ -836,7 +855,7 @@ function PlaybackView({ score, onExit }) {
                   {showSectionIndicator ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
               )}
-              {import.meta.env.DEV && (
+              {ENABLE_ANNOTATION && (
                 <button
                   type="button"
                   className="playback-option-annotate"
@@ -881,9 +900,9 @@ function PlaybackView({ score, onExit }) {
 
 function AnnotationView({ score }) {
   const readerRef = useRef(null)
-  const [loading, setLoading] = useState(true)
-  const [marks, setMarks] = useState([])
-  const [playOrder, setPlayOrder] = useState('')
+  const [initialAnnotations] = useState(() => readStoredAnnotations(score))
+  const [marks, setMarks] = useState(initialAnnotations.marks)
+  const [playOrder, setPlayOrder] = useState(initialAnnotations.playOrder)
   const [currentRatio, setCurrentRatio] = useState(0)
   const [previewMode, setPreviewMode] = useState(false)
 
@@ -893,21 +912,6 @@ function AnnotationView({ score }) {
     if (maxScroll <= 0) return 0
     return Math.min(1, Math.max(0, scrollTop / maxScroll))
   }, [])
-
-  useEffect(() => {
-    const storageKey = `score-annotations-${score.id}`
-    const saved = window.localStorage.getItem(storageKey)
-    if (saved) {
-      try {
-        const data = JSON.parse(saved)
-        setMarks(data.marks || [])
-        setPlayOrder(data.playOrder || '')
-      } catch (e) {
-        console.warn('Failed to parse saved annotations', e)
-      }
-    }
-    setLoading(false)
-  }, [score.id])
 
   useEffect(() => {
     const storageKey = `score-annotations-${score.id}`
@@ -931,7 +935,7 @@ function AnnotationView({ score }) {
       reader.addEventListener('scroll', handleScroll)
       return () => reader.removeEventListener('scroll', handleScroll)
     }
-  }, [handleScroll, loading])
+  }, [handleScroll])
 
   const addMark = useCallback(() => {
     const markNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
@@ -990,14 +994,6 @@ function AnnotationView({ score }) {
     setMarks([])
     setPlayOrder('')
   }, [])
-
-  if (loading) {
-    return (
-      <main className="annotation-shell">
-        <div className="annotation-loading">加载标注草稿...</div>
-      </main>
-    )
-  }
 
   if (previewMode) {
     const previewScore = { ...score, marks, playOrder }
