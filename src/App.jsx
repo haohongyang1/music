@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ChevronRight,
@@ -303,8 +303,7 @@ function PlaybackView({ score, onExit }) {
   const markJumpIndexRef = useRef(0)
   const lastScrollTopRef = useRef(0)
 
-  // 解析播放顺序为配对
-  const parsePlayOrder = useCallback(() => {
+  const playPairs = useMemo(() => {
     if (!marks?.length || !playOrder) return null
 
     const order = playOrder.split('→').map(s => s.trim())
@@ -319,8 +318,6 @@ function PlaybackView({ score, onExit }) {
     // 保存完整的顺序用于后续跳转
     return { pairs, order }
   }, [marks, playOrder])
-
-  const playPairs = parsePlayOrder()
 
   const setReaderOffset = useCallback((top) => {
     const target = getScrollTarget(readerRef.current)
@@ -477,6 +474,10 @@ function PlaybackView({ score, onExit }) {
   }, [setReaderOffset])
 
   useEffect(() => {
+    if (countdown <= 0) {
+      return undefined
+    }
+
     countdownTimerRef.current = window.setInterval(() => {
       setCountdown((current) => {
         if (current <= 1) {
@@ -502,7 +503,7 @@ function PlaybackView({ score, onExit }) {
     }, 1000)
 
     return () => window.clearInterval(countdownTimerRef.current)
-  }, [score.id, playPairs, marks, setReaderOffset])
+  }, [countdown, score.id, playPairs, marks, setReaderOffset])
 
   useEffect(
     () => () => {
