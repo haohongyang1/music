@@ -94,7 +94,7 @@ function readStoredSpeed(fallback) {
   return Math.min(MAX_SPEED, Math.max(MIN_SPEED, parsed))
 }
 
-function readStoredAnnotations(score, fallback = { marks: [], playOrder: '' }, options = {}) {
+function readStoredAnnotations(score, fallback = { marks: [], playOrder: '', segmentSpeeds: {} }, options = {}) {
   const storageKey = `score-annotations-${score.id}`
   const saved = window.localStorage.getItem(storageKey)
 
@@ -113,6 +113,7 @@ function readStoredAnnotations(score, fallback = { marks: [], playOrder: '' }, o
     return {
       marks,
       playOrder: data?.playOrder || '',
+      segmentSpeeds: data?.segmentSpeeds || {},
     }
   } catch (e) {
     console.warn('Failed to parse saved annotations', e)
@@ -292,12 +293,14 @@ function PlaybackView({ score, onExit }) {
       {
         marks: score.marks || [],
         playOrder: score.playOrder || '',
+        segmentSpeeds: score.segmentSpeeds || {},
       },
       { requireMarks: true },
     ),
   )
   const [marks] = useState(initialAnnotations.marks)
   const [playOrder] = useState(initialAnnotations.playOrder)
+  const [segmentSpeeds] = useState(initialAnnotations.segmentSpeeds || {})
 
   const sectionRepeatCountRef = useRef({})
   const markJumpIndexRef = useRef(0)
@@ -318,6 +321,19 @@ function PlaybackView({ score, onExit }) {
     // 保存完整的顺序用于后续跳转
     return { pairs, order }
   }, [marks, playOrder])
+
+  const getSegmentSpeed = useCallback(() => {
+    if (!playPairs?.order || !segmentSpeeds || !Object.keys(segmentSpeeds).length) return null
+    const idx = markJumpIndexRef.current
+    // 实际滚动段是 order 中偶数索引到下一个奇数索引: order[0]→order[1], order[2]→order[3]...
+    const scrollStart = idx * 2
+    const scrollEnd = scrollStart + 1
+    if (scrollStart >= 0 && scrollEnd < playPairs.order.length) {
+      const key = `${playPairs.order[scrollStart]}→${playPairs.order[scrollEnd]}`
+      return segmentSpeeds[key] || null
+    }
+    return null
+  }, [playPairs, segmentSpeeds])
 
   const setReaderOffset = useCallback((top) => {
     const target = getScrollTarget(readerRef.current)
@@ -527,7 +543,8 @@ function PlaybackView({ score, onExit }) {
 
       const elapsed = timestamp - lastFrameRef.current
       lastFrameRef.current = timestamp
-      const pixelsPerSecond = speedRef.current
+      const segmentSpeed = getSegmentSpeed()
+      const pixelsPerSecond = segmentSpeed || speedRef.current
       const target = getScrollTarget(readerRef.current)
       let nextTop = scrollTopRef.current + (pixelsPerSecond * elapsed) / 1000
 
@@ -627,7 +644,8 @@ function PlaybackView({ score, onExit }) {
     currentSectionId,
     shouldTriggerRepeat,
     executeRepeat,
-    revealIndicator
+    revealIndicator,
+    getSegmentSpeed,
   ])
 
   const togglePlayback = useCallback(() => {
@@ -698,11 +716,19 @@ function PlaybackView({ score, onExit }) {
     if (playPairs?.order?.length && marks?.length) {
       const currentTargetIndex = markJumpIndexRef.current
 
-      if (currentTargetIndex >= 0 && currentTargetIndex < playPairs.order.length) {
-        const current = playPairs.order[currentTargetIndex]
-        const next = playPairs.order[currentTargetIndex + 1]
+      if (currentTargetIndex >= 0 && currentTargetIndex * 2 < playPairs.order.length) {
+        const scrollStart = currentTargetIndex * 2
+        const scrollEnd = scrollStart + 1
+        const current = playPairs.order[scrollStart]
+        const next = playPairs.order[scrollEnd]
 
         let display = `${current} → ${next}`
+
+        // 显示当前段落速度
+        const segSpeed = getSegmentSpeed()
+        if (segSpeed) {
+          display += ` · ${segSpeed}px/s`
+        }
 
         if (!next) {
           display += ` → 结束`
@@ -901,9 +927,16 @@ function PlaybackView({ score, onExit }) {
 
 function AnnotationView({ score }) {
   const readerRef = useRef(null)
-  const [initialAnnotations] = useState(() => readStoredAnnotations(score))
+  const [initialAnnotations] = useState(() =>
+    readStoredAnnotations(score, {
+      marks: score.marks || [],
+      playOrder: score.playOrder || '',
+      segmentSpeeds: score.segmentSpeeds || {},
+    }),
+  )
   const [marks, setMarks] = useState(initialAnnotations.marks)
   const [playOrder, setPlayOrder] = useState(initialAnnotations.playOrder)
+  const [segmentSpeeds, setSegmentSpeeds] = useState(initialAnnotations.segmentSpeeds || {})
   const [currentRatio, setCurrentRatio] = useState(0)
   const [previewMode, setPreviewMode] = useState(false)
 
@@ -914,10 +947,22 @@ function AnnotationView({ score }) {
     return Math.min(1, Math.max(0, scrollTop / maxScroll))
   }, [])
 
+  const segments = useMemo(() => {
+    if (!playOrder) return []
+    const names = playOrder.split('→').map(s => s.trim()).filter(Boolean)
+    const pairs = []
+    // 只有 order 中偶数→奇数索引的配对才是实际滚动段
+    // order[0]→order[1], order[2]→order[3], ...
+    for (let i = 0; i + 1 < names.length; i += 2) {
+      pairs.push({ key: `${names[i]}→${names[i+1]}`, start: names[i], end: names[i+1] })
+    }
+    return pairs
+  }, [playOrder])
+
   useEffect(() => {
     const storageKey = `score-annotations-${score.id}`
-    window.localStorage.setItem(storageKey, JSON.stringify({ marks, playOrder }))
-  }, [score.id, marks, playOrder])
+    window.localStorage.setItem(storageKey, JSON.stringify({ marks, playOrder, segmentSpeeds }))
+  }, [score.id, marks, playOrder, segmentSpeeds])
 
   const handleScroll = useCallback(() => {
     if (!readerRef.current) return
@@ -982,14 +1027,15 @@ function AnnotationView({ score }) {
         name: m.name,
         ratio: parseFloat(m.ratio.toFixed(4))
       })),
-      playOrder: playOrder
+      playOrder: playOrder,
+      segmentSpeeds: segmentSpeeds,
     }
     console.log('=== 导出 JSON ===')
     console.log(JSON.stringify(data, null, 2))
     console.log('=================')
     navigator.clipboard.writeText(JSON.stringify(data, null, 2))
     alert('已复制到剪贴板，粘贴到 scoreData.js')
-  }, [marks, playOrder])
+  }, [marks, playOrder, segmentSpeeds])
 
   const clearAll = useCallback(() => {
     setMarks([])
@@ -997,7 +1043,7 @@ function AnnotationView({ score }) {
   }, [])
 
   if (previewMode) {
-    const previewScore = { ...score, marks, playOrder }
+    const previewScore = { ...score, marks, playOrder, segmentSpeeds }
     return <PlaybackView key={previewScore.id} score={previewScore} onExit={() => setPreviewMode(false)} />
   }
 
@@ -1104,6 +1150,43 @@ function AnnotationView({ score }) {
           />
           <p className="play-order-hint">输入标记点名称，用 → 连接</p>
         </div>
+
+        {segments.length > 0 && (
+          <div className="segment-speed-section">
+            <label>段落速度（每段可独立设置滚动速度）</label>
+            <div className="segment-speed-list">
+              {segments.map((seg) => {
+                const currentSpeed = segmentSpeeds[seg.key] || DEFAULT_SPEED
+                return (
+                  <div key={seg.key} className="segment-speed-row">
+                    <span className="segment-speed-label">{seg.start} → {seg.end}</span>
+                    <input
+                      type="range"
+                      className="segment-speed-slider"
+                      min={MIN_SPEED}
+                      max={MAX_SPEED}
+                      step="1"
+                      value={currentSpeed}
+                      onChange={(e) => {
+                        const newSpeed = Number(e.target.value)
+                        setSegmentSpeeds(prev => {
+                          const next = { ...prev }
+                          if (newSpeed === DEFAULT_SPEED) {
+                            delete next[seg.key]
+                          } else {
+                            next[seg.key] = newSpeed
+                          }
+                          return next
+                        })
+                      }}
+                    />
+                    <span className="segment-speed-value">{currentSpeed}px/s</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="annotation-panel-footer">
           <button
