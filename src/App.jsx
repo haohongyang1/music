@@ -278,10 +278,6 @@ function PlaybackView({ score, onExit }) {
   const speedRef = useRef(speed)
 
   const [currentSectionId, setCurrentSectionId] = useState(null)
-  const [skipRepeat, setSkipRepeat] = useState(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEYS.SKIP_REPEAT)
-    return stored === 'true'
-  })
   const [showSectionIndicator, setShowSectionIndicator] = useState(() => {
     const stored = window.localStorage.getItem(STORAGE_KEYS.SHOW_SECTION_INDICATOR)
     return stored !== 'false'
@@ -391,10 +387,6 @@ function PlaybackView({ score, onExit }) {
   }, [])
 
   const shouldTriggerRepeat = useCallback((currentPos, maxScroll, clientHeight) => {
-    if (skipRepeat) {
-      console.log('跳过反复模式已启用')
-      return false
-    }
     if (!score.sections?.length) {
       console.log('没有段落数据')
       return false
@@ -426,7 +418,7 @@ function PlaybackView({ score, onExit }) {
     console.log('===================')
 
     return currentCount < repeat.times
-  }, [skipRepeat, score.sections, score.repeats, isInTriggerZone])
+  }, [score.sections, score.repeats, isInTriggerZone])
 
   const executeRepeat = useCallback((endSection, maxScroll) => {
     // 查找以当前段落为结束段落的反复规则
@@ -469,10 +461,6 @@ function PlaybackView({ score, onExit }) {
     speedRef.current = speed
     window.localStorage.setItem(STORAGE_KEYS.SPEED, String(speed))
   }, [speed])
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEYS.SKIP_REPEAT, String(skipRepeat))
-  }, [skipRepeat])
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.SHOW_SECTION_INDICATOR, String(showSectionIndicator))
@@ -655,11 +643,6 @@ function PlaybackView({ score, onExit }) {
     revealControls()
   }, [revealControls])
 
-  const toggleSkipRepeat = useCallback(() => {
-    setSkipRepeat(prev => !prev)
-    revealControls()
-  }, [revealControls])
-
   const toggleIndicatorVisibility = useCallback(() => {
     setShowSectionIndicator(prev => !prev)
     revealControls()
@@ -758,7 +741,7 @@ function PlaybackView({ score, onExit }) {
     let display = section.name
 
     // 如果在反复范围内，显示重复次数
-    if (repeat && !skipRepeat) {
+    if (repeat) {
       const repeatKey = `${repeat.startSection}-${repeat.endSection}`
       const count = sectionRepeatCountRef.current[repeatKey] || 0
       // 只有在结束段落时才显示完整次数
@@ -862,16 +845,6 @@ function PlaybackView({ score, onExit }) {
               />
             </label>
             <div className="playback-options">
-              {score.repeats?.length > 0 && (
-                <button
-                  type="button"
-                  className={`playback-option ${skipRepeat ? 'active' : ''}`}
-                  onClick={toggleSkipRepeat}
-                  aria-label={skipRepeat ? '启用反复' : '跳过反复'}
-                >
-                  跳过反复
-                </button>
-              )}
               {score.sections?.length > 0 && (
                 <button
                   type="button"

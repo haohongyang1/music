@@ -15,7 +15,6 @@ import xiaoBanPage1 from './assets/imgs/xiao-ban-01.jpg'
 
 export const STORAGE_KEYS = {
   SPEED: 'score-autoplay-speed',
-  SKIP_REPEAT: 'score-skip-repeat',
   SHOW_SECTION_INDICATOR: 'score-show-section-indicator'
 }
 

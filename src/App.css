@@ -444,32 +444,6 @@ input[type='range'] {
   margin-left: auto;
 }
 
-.playback-option {
-  min-height: 26px;
-  padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.8);
-  background: transparent;
-  font-size: 12px;
-  cursor: pointer;
-  transition:
-    background 0.16s ease,
-    color 0.16s ease,
-    border-color 0.16s ease;
-}
-
-.playback-option:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.playback-option.active {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-}
-
 .playback-option-indicator {
   min-height: 26px;
   width: 26px;
