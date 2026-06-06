@@ -11,6 +11,7 @@ import daoJiangXingPage3 from './assets/imgs/dao-jiang-xing-03.jpg'
 import dangAiZaiKaoJinPage1 from './assets/imgs/dang-ai-zai-kao-jin-01.jpg'
 import liXiangSanXunPage1 from './assets/imgs/li-xiang-san-xun-01.png'
 import nuanNuanPage1 from './assets/imgs/nuan-nuan-01.jpg'
+import xiaoBanPage1 from './assets/imgs/xiao-ban-01.jpg'
 
 export const STORAGE_KEYS = {
   SPEED: 'score-autoplay-speed',
@@ -180,6 +181,24 @@ const rawScores = [
       '一页吉他弹唱谱，适合弹唱练习。',
     pages: [
       { src: nuanNuanPage1, label: '第 1 页', focus: '完整曲谱' },
+    ],
+  },
+  {
+    id: 'xiao-ban',
+    title: '小半',
+    artist: '陈粒',
+    arranger: '岛屿吉他',
+    originalKey: 'G',
+    selectedKey: 'G',
+    tuning: '标准调弦',
+    firstLetter: 'X',
+    sortKey: 'xiao ban',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片标注：岛屿吉他，原 key G，选调 G',
+    summary:
+      '一页吉他弹唱谱，主要和弦为 G、E、C、Am、Cmaj7、Em、D，标注了 A、B 段扫弦节奏与根音弹奏位置。',
+    pages: [
+      { src: xiaoBanPage1, label: '第 1 页', focus: '完整曲谱' },
     ],
   },
 ]
