@@ -345,7 +345,7 @@ input[type='range'] {
 
 .playback-control-row {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-columns: 52px 52px minmax(0, 1fr);
   gap: 14px;
   align-items: center;
 }
@@ -380,6 +380,10 @@ input[type='range'] {
   height: 24px;
   fill: currentColor;
   stroke-width: 2.5;
+}
+
+.playback-replay svg {
+  fill: none;
 }
 
 .playback-play:hover {
@@ -704,7 +708,7 @@ input[type='range'] {
   }
 
   .playback-control-row {
-    grid-template-columns: 50px minmax(0, 1fr);
+    grid-template-columns: 50px 50px minmax(0, 1fr);
     gap: 12px;
   }
 

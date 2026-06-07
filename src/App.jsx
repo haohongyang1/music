@@ -8,6 +8,7 @@ import {
   ListMusic,
   Pause,
   Play,
+  RotateCcw,
   FileText,
   Download,
   Trash2,
@@ -643,6 +644,25 @@ function PlaybackView({ score, onExit }) {
     revealControls()
   }, [revealControls])
 
+  const replayFromStart = useCallback(() => {
+    window.clearInterval(countdownTimerRef.current)
+    sectionRepeatCountRef.current = {}
+    markJumpIndexRef.current = 0
+    lastFrameRef.current = 0
+    lastScrollTopRef.current = -1
+
+    setCountdown(0)
+    setCurrentSectionId(score.sections?.[0]?.id || null)
+    setReaderOffset(0)
+    setIsPlaying(false)
+
+    window.requestAnimationFrame(() => {
+      lastFrameRef.current = 0
+      setIsPlaying(true)
+      revealControls()
+    })
+  }, [revealControls, score.sections, setReaderOffset])
+
   const toggleIndicatorVisibility = useCallback(() => {
     setShowSectionIndicator(prev => !prev)
     revealControls()
@@ -824,6 +844,15 @@ function PlaybackView({ score, onExit }) {
               aria-label={isPlaying ? '暂停' : '播放'}
             >
               {isPlaying ? <Pause size={22} /> : <Play size={22} />}
+            </button>
+            <button
+              type="button"
+              className="playback-play playback-replay"
+              onClick={replayFromStart}
+              aria-label="重新播放"
+              title="重新播放"
+            >
+              <RotateCcw size={22} />
             </button>
             <label className="playback-speed" htmlFor="playback-speed">
               <span>
