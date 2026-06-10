@@ -1,3 +1,5 @@
+import aiDeMoFaPage1 from './assets/imgs/ai-de-mo-fa-01.jpg'
+import aiDeMoFaPage2 from './assets/imgs/ai-de-mo-fa-02.jpg'
 import redHighHeelsPage1 from './assets/imgs/hong-se-gao-gen-xie-01.jpg'
 import redHighHeelsPage2 from './assets/imgs/hong-se-gao-gen-xie-02.jpg'
 import redHighHeelsPage3 from './assets/imgs/hong-se-gao-gen-xie-03.jpg'
@@ -12,6 +14,7 @@ import dangAiZaiKaoJinPage1 from './assets/imgs/dang-ai-zai-kao-jin-01.jpg'
 import jiMoShaZhouLengPage1 from './assets/imgs/ji-mo-sha-zhou-leng-01.jpg'
 import jiMoShaZhouLengPage2 from './assets/imgs/ji-mo-sha-zhou-leng-02.jpg'
 import liXiangSanXunPage1 from './assets/imgs/li-xiang-san-xun-01.png'
+import manManXiHuanNiPage1 from './assets/imgs/man-man-xi-huan-ni-01.jpg'
 import nuanNuanPage1 from './assets/imgs/nuan-nuan-01.jpg'
 import xiaoBanPage1 from './assets/imgs/xiao-ban-01.jpg'
 
@@ -21,6 +24,25 @@ export const STORAGE_KEYS = {
 }
 
 const rawScores = [
+  {
+    id: 'ai-de-mo-fa',
+    title: '爱的魔法',
+    artist: '金莎',
+    arranger: '未标注',
+    originalKey: '未标注',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'A',
+    sortKey: 'ai de mo fa',
+    tags: ['和弦歌词谱', '弹唱谱', '2 页'],
+    source: '用户提供图片：两页和弦歌词谱',
+    summary:
+      '两页吉他弹唱谱，主要和弦为 Am、F、G、C，包含前奏、主歌、导歌、副歌与间奏，并标注了对应扫弦节奏。',
+    pages: [
+      { src: aiDeMoFaPage1, label: '第 1 页', focus: '前奏、主歌' },
+      { src: aiDeMoFaPage2, label: '第 2 页', focus: '导歌、副歌、间奏' },
+    ],
+  },
   {
     id: 'hong-se-gao-gen-xie',
     title: '红色高跟鞋',
@@ -183,6 +205,24 @@ const rawScores = [
     pages: [
       { src: jiMoShaZhouLengPage1, label: '第 1 页', focus: '前奏、主歌前半' },
       { src: jiMoShaZhouLengPage2, label: '第 2 页', focus: '主歌后半、尾段' },
+    ],
+  },
+  {
+    id: 'man-man-xi-huan-ni',
+    title: '慢慢喜欢你',
+    artist: '莫文蔚',
+    arranger: '岛屿吉他',
+    originalKey: 'G',
+    selectedKey: 'G',
+    tuning: '标准调弦',
+    firstLetter: 'M',
+    sortKey: 'man man xi huan ni',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片标注：岛屿吉他，原 key G，选调 G',
+    summary:
+      '一页吉他弹唱谱，主要和弦包含 G、E7、C、Am7、A7、Bm、Cm、B7、Dm、D、Dsus4、Bbm，标注 A、B 段扫弦节奏。',
+    pages: [
+      { src: manManXiHuanNiPage1, label: '第 1 页', focus: '完整曲谱' },
     ],
   },
   {

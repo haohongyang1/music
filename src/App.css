@@ -8,6 +8,44 @@
   padding: 40px 0 56px;
 }
 
+.main-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.main-tabs button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.main-tabs button:hover {
+  color: var(--text-strong);
+  background: var(--surface-hover);
+}
+
+.main-tabs button.active {
+  color: white;
+  background: var(--accent-strong);
+}
+
 .library-header {
   display: flex;
   align-items: flex-start;
@@ -77,6 +115,124 @@
 .library-grid {
   display: grid;
   gap: 26px;
+}
+
+.practice-header {
+  margin-bottom: 24px;
+}
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
+  gap: 18px;
+}
+
+.practice-card {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 10px 24px rgba(26, 52, 38, 0.06);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.practice-card:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.practice-card-button {
+  width: 100%;
+  min-height: 112px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 24px;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.practice-card-button:hover,
+.practice-card-button:focus-visible {
+  outline: none;
+  background: var(--surface-hover);
+}
+
+.practice-card-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.practice-card h2 {
+  margin: 0 0 5px;
+  color: var(--text-strong);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.practice-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.practice-card-button > svg {
+  color: var(--text-muted);
+}
+
+.scale-view {
+  min-height: 100svh;
+  background: var(--bg);
+}
+
+.scale-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.scale-header h1 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 18px;
+}
+
+.scale-image-wrap {
+  width: min(980px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 18px 0 40px;
+}
+
+.scale-image-wrap img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
 }
 
 .score-group {

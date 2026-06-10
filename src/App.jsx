@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ChevronRight,
+  Dumbbell,
   Eye,
   EyeOff,
   Gauge,
   ListMusic,
+  Music2,
   Pause,
   Play,
   RotateCcw,
@@ -16,6 +18,7 @@ import {
   MapPin,
 } from 'lucide-react'
 import './App.css'
+import cMajorScaleTable from './assets/imgs/c-major-scale-table-01.jpg'
 import {
   getScoreById,
   scoreGroups,
@@ -65,6 +68,14 @@ function readRoute() {
   const [, maybeScoreId] = hash.match(/^\/score\/([^/]+)$/) || []
   const [, annotateScoreId] = hash.match(/^\/annotate\/([^/]+)$/) || []
 
+  if (hash === '/practice/scales') {
+    return { view: 'practice-scales' }
+  }
+
+  if (hash === '/practice') {
+    return { view: 'practice' }
+  }
+
   if (annotateScoreId) {
     return { view: 'annotate', scoreId: annotateScoreId }
   }
@@ -78,6 +89,14 @@ function navigateToLibrary() {
 
 function navigateToScore(scoreId) {
   window.location.hash = `/score/${scoreId}`
+}
+
+function navigateToPractice() {
+  window.location.hash = '/practice'
+}
+
+function navigateToScaleTable() {
+  window.location.hash = '/practice/scales'
 }
 
 function navigateToAnnotate(scoreId) {
@@ -163,6 +182,14 @@ function App() {
     return <MissingScore scoreId={route.scoreId} />
   }
 
+  if (route.view === 'practice-scales') {
+    return <ScaleTableView />
+  }
+
+  if (route.view === 'practice') {
+    return <PracticeView />
+  }
+
   return selectedScore ? (
     <PlaybackView key={selectedScore.id} score={selectedScore} />
   ) : annotateScore ? (
@@ -188,6 +215,7 @@ function MissingScore({ scoreId }) {
 function LibraryView() {
   return (
     <main className="app-shell library-shell">
+      <MainTabs active="library" />
       <header className="library-header">
         <div>
           <p className="eyebrow">Score Player</p>
@@ -257,6 +285,80 @@ function LibraryView() {
           </section>
         ))}
       </section>
+    </main>
+  )
+}
+
+function MainTabs({ active }) {
+  return (
+    <nav className="main-tabs" aria-label="主导航">
+      <button
+        type="button"
+        className={active === 'library' ? 'active' : ''}
+        onClick={navigateToLibrary}
+      >
+        <ListMusic size={18} />
+        曲谱库
+      </button>
+      <button
+        type="button"
+        className={active === 'practice' ? 'active' : ''}
+        onClick={navigateToPractice}
+      >
+        <Dumbbell size={18} />
+        每日必练
+      </button>
+    </nav>
+  )
+}
+
+function PracticeView() {
+  return (
+    <main className="app-shell library-shell">
+      <MainTabs active="practice" />
+      <header className="library-header practice-header">
+        <div>
+          <p className="eyebrow">Daily Practice</p>
+          <h1>每日必练</h1>
+        </div>
+      </header>
+
+      <section className="practice-grid" aria-label="每日必练入口">
+        <article className="practice-card">
+          <button
+            type="button"
+            className="practice-card-button"
+            onClick={navigateToScaleTable}
+            aria-label="打开音阶表"
+          >
+            <div className="practice-card-icon">
+              <Music2 size={28} />
+            </div>
+            <div>
+              <h2>音阶表</h2>
+              <p>C 大调音阶位置与高低音区对照。</p>
+            </div>
+            <ChevronRight size={20} />
+          </button>
+        </article>
+      </section>
+    </main>
+  )
+}
+
+function ScaleTableView() {
+  return (
+    <main className="scale-view">
+      <header className="scale-header">
+        <button type="button" className="annotation-back" onClick={navigateToPractice}>
+          <ArrowLeft size={17} />
+          返回每日必练
+        </button>
+        <h1>音阶表</h1>
+      </header>
+      <div className="scale-image-wrap">
+        <img src={cMajorScaleTable} alt="C 大调音阶表" />
+      </div>
     </main>
   )
 }
