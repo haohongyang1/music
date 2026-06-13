@@ -12,11 +12,13 @@ import daoJiangXingPage2 from './assets/imgs/dao-jiang-xing-02.jpg'
 import daoJiangXingPage3 from './assets/imgs/dao-jiang-xing-03.jpg'
 import dangAiZaiKaoJinPage1 from './assets/imgs/dang-ai-zai-kao-jin-01.jpg'
 import jiMoShaZhouLengPage1 from './assets/imgs/ji-mo-sha-zhou-leng-01.jpg'
-import jiMoShaZhouLengPage2 from './assets/imgs/ji-mo-sha-zhou-leng-02.jpg'
 import liXiangSanXunPage1 from './assets/imgs/li-xiang-san-xun-01.png'
 import manManXiHuanNiPage1 from './assets/imgs/man-man-xi-huan-ni-01.jpg'
 import nuanNuanPage1 from './assets/imgs/nuan-nuan-01.jpg'
 import xiaoBanPage1 from './assets/imgs/xiao-ban-01.jpg'
+import mingYunPage1 from './assets/imgs/ming-yun-01.jpg'
+import mingYunPage2 from './assets/imgs/ming-yun-02.jpg'
+import mingYunPage3 from './assets/imgs/ming-yun-03.jpg'
 
 export const STORAGE_KEYS = {
   SPEED: 'score-autoplay-speed',
@@ -198,13 +200,12 @@ const rawScores = [
     tuning: '标准调弦',
     firstLetter: 'J',
     sortKey: 'ji mo sha zhou leng',
-    tags: ['六线谱', '弹唱谱', '2 页'],
+    tags: ['六线谱', '弹唱谱', '1 页'],
     source: '图片标注：革命吉他制造，1=G，4/4，含笑微信 GEMINGJITA',
     summary:
-      '两页吉他弹唱谱，图片标注 1=G、4/4，主要和弦包含 G、C、D/F#、Bm、Em、D，含前奏、主歌与尾段。',
+      '单页吉他弹唱谱，图片标注 1=G、4/4，主要和弦包含 G、C、D/F#、Bm、Em、D，含前奏、主歌与尾段。',
     pages: [
-      { src: jiMoShaZhouLengPage1, label: '第 1 页', focus: '前奏、主歌前半' },
-      { src: jiMoShaZhouLengPage2, label: '第 2 页', focus: '主歌后半、尾段' },
+      { src: jiMoShaZhouLengPage1, label: '第 1 页', focus: '完整曲谱' },
     ],
   },
   {
@@ -259,6 +260,26 @@ const rawScores = [
       '一页吉他弹唱谱，主要和弦为 G、E、C、Am、Cmaj7、Em、D，标注了 A、B 段扫弦节奏与根音弹奏位置。',
     pages: [
       { src: xiaoBanPage1, label: '第 1 页', focus: '完整曲谱' },
+    ],
+  },
+  {
+    id: 'ming-yun',
+    title: '命运',
+    artist: '未标注',
+    arranger: '革命吉他制造',
+    originalKey: 'C',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'M',
+    sortKey: 'ming yun',
+    tags: ['六线谱', '弹唱谱', '3 页'],
+    source: '图片标注：革命吉他制造，含笑微信 GEMINGJITA',
+    summary:
+      '三页吉他弹唱谱，主要和弦包含 C、G、Am、Em、F、Dm 等，含前奏、主歌与副歌。',
+    pages: [
+      { src: mingYunPage1, label: '第 1 页', focus: '前奏、主歌前半' },
+      { src: mingYunPage2, label: '第 2 页', focus: '主歌后半' },
+      { src: mingYunPage3, label: '第 3 页', focus: '副歌、尾段' },
     ],
   },
 ]
