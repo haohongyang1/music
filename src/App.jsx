@@ -213,8 +213,32 @@ function MissingScore({ scoreId }) {
 }
 
 function LibraryView() {
+  const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const existingLetters = scoreGroups.map((g) => g.letter)
+
+  const scrollToLetter = (letter) => {
+    const element = document.getElementById(`letter-${letter}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <main className="app-shell library-shell">
+      <nav className="letter-index" aria-label="字母快速定位">
+        {ALPHABET.map((letter) => (
+          <button
+            key={letter}
+            type="button"
+            className={`letter-index-item ${existingLetters.includes(letter) ? 'active' : 'disabled'}`}
+            onClick={() => scrollToLetter(letter)}
+            disabled={!existingLetters.includes(letter)}
+            aria-label={`定位到 ${letter} 开头的曲谱`}
+          >
+            {letter}
+          </button>
+        ))}
+      </nav>
       <MainTabs active="library" />
       <header className="library-header">
         <div>
@@ -233,7 +257,7 @@ function LibraryView() {
 
       <section className="library-grid" aria-label="乐谱列表">
         {scoreGroups.map((group) => (
-          <section className="score-group" key={group.letter}>
+          <section className="score-group" key={group.letter} id={`letter-${group.letter}`}>
             <div className="group-letter">{group.letter}</div>
             <div className="score-cards">
               {group.scores.map((score) => (

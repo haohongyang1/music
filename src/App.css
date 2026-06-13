@@ -8,6 +8,59 @@
   padding: 40px 0 56px;
 }
 
+.letter-index {
+  position: fixed;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 3px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.letter-index-item {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.letter-index-item.active {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.letter-index-item.active:hover {
+  background: var(--accent-border);
+  color: var(--accent-strong);
+}
+
+.letter-index-item.disabled {
+  color: var(--text-muted);
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .letter-index {
+    display: none;
+  }
+}
+
 .main-tabs {
   display: inline-flex;
   align-items: center;
