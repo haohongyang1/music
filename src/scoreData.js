@@ -13,8 +13,12 @@ import daoJiangXingPage3 from './assets/imgs/dao-jiang-xing-03.jpg'
 import dangAiZaiKaoJinPage1 from './assets/imgs/dang-ai-zai-kao-jin-01.jpg'
 import jiMoShaZhouLengPage1 from './assets/imgs/ji-mo-sha-zhou-leng-01.jpg'
 import liXiangSanXunPage1 from './assets/imgs/li-xiang-san-xun-01.png'
-import manManXiHuanNiPage1 from './assets/imgs/man-man-xi-huan-ni-01.jpg'
+import manManXiHuanNiPage1 from './assets/imgs/man-man-xi-huan-ni.jpg'
 import nuanNuanPage1 from './assets/imgs/nuan-nuan-01.jpg'
+import qiYueShangPage1 from './assets/imgs/qi-yue-shang.jpg'
+import suiYueShenTouPage1 from './assets/imgs/sui-yue-shen-tou.jpg'
+import xiaTianDeFengPage1 from './assets/imgs/xia-tian-de-feng-01.jpg'
+import xiaTianDeFengPage2 from './assets/imgs/xia-tian-de-feng-02.jpg'
 import xiaoBanPage1 from './assets/imgs/xiao-ban-01.jpg'
 import mingYunPage1 from './assets/imgs/ming-yun-01.jpg'
 import mingYunPage2 from './assets/imgs/ming-yun-02.jpg'
@@ -227,6 +231,24 @@ const rawScores = [
     ],
   },
   {
+    id: 'qi-yue-shang',
+    title: '七月上',
+    artist: 'Jam',
+    arranger: '大树老师',
+    originalKey: 'bB',
+    selectedKey: 'C',
+    tuning: '吉他标准音降半调',
+    firstLetter: 'Q',
+    sortKey: 'qi yue shang',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片标注：大树乐器，原调 bB，选调 C（吉他标准音降半调变回原调）',
+    summary:
+      '一页吉他弹唱谱，词曲 Jam，主要和弦为 C、G、Am7、F、Dm7，含前奏扫弦与节奏型标注。',
+    pages: [
+      { src: qiYueShangPage1, label: '第 1 页', focus: '前奏、主歌、副歌' },
+    ],
+  },
+  {
     id: 'nuan-nuan',
     title: '暖暖',
     artist: '梁静茹',
@@ -242,6 +264,24 @@ const rawScores = [
       '一页吉他弹唱谱，适合弹唱练习。',
     pages: [
       { src: nuanNuanPage1, label: '第 1 页', focus: '完整曲谱' },
+    ],
+  },
+  {
+    id: 'sui-yue-shen-tou',
+    title: '岁月神偷',
+    artist: '金玟岐',
+    arranger: '大树老师Roger',
+    originalKey: 'G',
+    selectedKey: 'G',
+    tuning: '标准调弦',
+    firstLetter: 'S',
+    sortKey: 'sui yue shen tou',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片标注：大树乐器，原调 G，选调 G',
+    summary:
+      '一页吉他弹唱谱，主要和弦为 G、D/#F、Em、Bm7、C、Am7、D，含前奏、A 段、B 段与两种节奏型标注。',
+    pages: [
+      { src: suiYueShenTouPage1, label: '第 1 页', focus: '前奏、A 段、B 段' },
     ],
   },
   {
@@ -280,6 +320,25 @@ const rawScores = [
       { src: mingYunPage1, label: '第 1 页', focus: '前奏、主歌前半' },
       { src: mingYunPage2, label: '第 2 页', focus: '主歌后半' },
       { src: mingYunPage3, label: '第 3 页', focus: '副歌、尾段' },
+    ],
+  },
+  {
+    id: 'xia-tian-de-feng',
+    title: '夏天的风',
+    artist: '温岚',
+    arranger: '革命吉他',
+    originalKey: 'D',
+    selectedKey: 'D',
+    tuning: '变调夹 2 品',
+    firstLetter: 'X',
+    sortKey: 'xia tian de feng',
+    tags: ['六线谱', '弹唱谱', '2 页'],
+    source: '图片标注：革命吉他制谱，1=D，4/4，变调夹 2 品',
+    summary:
+      '两页吉他弹唱谱，含前奏、主歌、副歌与反复段落。主要和弦围绕 Fmaj7、G、Em7、Am7、Dm7、C 展开，适合练习稳定分解与扫弦转换。',
+    pages: [
+      { src: xiaTianDeFengPage1, label: '第 1 页', focus: '前奏、主歌、副歌前半' },
+      { src: xiaTianDeFengPage2, label: '第 2 页', focus: '副歌后半、反复与结尾' },
     ],
   },
 ]
