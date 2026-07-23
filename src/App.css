@@ -55,9 +55,21 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 640px) {
   .letter-index {
     display: none;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .letter-index {
+    right: 10px;
+  }
+
+  .letter-index-item {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
   }
 }
 
