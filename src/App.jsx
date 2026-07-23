@@ -217,7 +217,7 @@ function MissingScore({ scoreId }) {
 }
 
 function LibraryView() {
-  const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const ALPHABET = 'ABCDEF'.split('')
   const existingLetters = scoreGroups.map((g) => g.letter)
 
   const scrollToLetter = (letter) => {
@@ -254,8 +254,8 @@ function LibraryView() {
         </div>
         <div className="library-stat" aria-label="乐谱统计">
           <ListMusic size={24} />
-          <strong>{scores.reduce((total, score) => total + score.pageCount, 0)}</strong>
-          <span>张乐谱图片</span>
+          <strong>{scores.length}</strong>
+          <span>首乐谱</span>
         </div>
       </header>
 

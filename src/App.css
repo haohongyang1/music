@@ -10,7 +10,7 @@
 
 .letter-index {
   position: fixed;
-  left: 8px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 50;
