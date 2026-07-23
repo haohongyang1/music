@@ -374,6 +374,24 @@
   box-shadow: 0 10px 20px rgba(16, 22, 18, 0.11);
 }
 
+.score-thumb-external {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  color: var(--accent-strong);
+  background:
+    linear-gradient(180deg, rgba(47, 114, 83, 0.08), rgba(47, 114, 83, 0.02)),
+    #fff;
+}
+
+.score-cover .score-thumb-external span {
+  position: static;
+  padding: 0;
+  color: var(--accent-strong);
+  background: transparent;
+  font-size: 12px;
+}
+
 .score-cover span {
   position: absolute;
   right: 8px;
@@ -802,6 +820,53 @@ input[type='range'] {
   justify-items: center;
   gap: 16px;
   text-align: center;
+}
+
+.external-source-state {
+  gap: 14px;
+}
+
+.external-source-copy {
+  max-width: 520px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.external-source-card {
+  min-width: min(520px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.external-source-card svg {
+  flex: 0 0 auto;
+  color: var(--accent-strong);
+}
+
+.external-source-card strong,
+.external-source-card span {
+  display: block;
+}
+
+.external-source-card strong {
+  color: var(--text-strong);
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.external-source-card span {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 @media (max-width: 900px) {

@@ -191,7 +191,11 @@ function App() {
   }
 
   return selectedScore ? (
-    <PlaybackView key={selectedScore.id} score={selectedScore} />
+    selectedScore.externalSource ? (
+      <ExternalScoreView key={selectedScore.id} score={selectedScore} />
+    ) : (
+      <PlaybackView key={selectedScore.id} score={selectedScore} />
+    )
   ) : annotateScore ? (
     <AnnotationView key={annotateScore.id} score={annotateScore} />
   ) : (
@@ -266,15 +270,22 @@ function LibraryView() {
                     type="button"
                     className="score-card-button"
                     onClick={() => navigateToScore(score.id)}
-                    aria-label={`打开 ${score.title}`}
+                    aria-label={`${score.externalSource ? '查看来源' : '打开'} ${score.title}`}
                   >
                     <div className="score-cover">
-                      <img
-                        className="score-thumb"
-                        src={score.thumbnail}
-                        alt={`${score.title} 乐谱缩略图`}
-                      />
-                      <span>{score.pageCount} 页</span>
+                      {score.thumbnail ? (
+                        <img
+                          className="score-thumb"
+                          src={score.thumbnail}
+                          alt={`${score.title} 乐谱缩略图`}
+                        />
+                      ) : (
+                        <div className="score-thumb score-thumb-external" aria-hidden="true">
+                          <Music2 size={28} />
+                          <span>{score.externalSource?.label || '外部来源'}</span>
+                        </div>
+                      )}
+                      <span>{score.externalSource?.label || `${score.pageCount} 页`}</span>
                     </div>
                     <div className="score-card-body">
                       <div className="score-title-row">
@@ -285,13 +296,13 @@ function LibraryView() {
                           </p>
                         </div>
                         <span className="open-score">
-                          打开
+                          {score.externalSource ? '查看来源' : '打开'}
                           <ChevronRight size={17} />
                         </span>
                       </div>
                       <p className="score-summary">{score.summary}</p>
                       <div className="score-meta">
-                        <span>{score.pageCount} 页</span>
+                        <span>{score.externalSource?.label || `${score.pageCount} 页`}</span>
                         <span>原调 {score.originalKey}</span>
                         <span>选调 {score.selectedKey}</span>
                         <span>{score.tuning}</span>
@@ -383,6 +394,27 @@ function ScaleTableView() {
       <div className="scale-image-wrap">
         <img src={cMajorScaleTable} alt="C 大调音阶表" />
       </div>
+    </main>
+  )
+}
+
+function ExternalScoreView({ score, onExit }) {
+  return (
+    <main className="empty-state external-source-state">
+      <p className="eyebrow">外部曲谱</p>
+      <h1>{score.title}</h1>
+      <p className="external-source-copy">{score.externalSource?.description || score.source}</p>
+      <div className="external-source-card">
+        <Music2 size={26} />
+        <div>
+          <strong>{score.externalSource?.label || '外部来源'}</strong>
+          <span>{score.artist} · {score.arranger}</span>
+        </div>
+      </div>
+      <button type="button" className="primary-action" onClick={onExit || navigateToLibrary}>
+        <ArrowLeft size={18} />
+        返回列表
+      </button>
     </main>
   )
 }

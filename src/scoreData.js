@@ -11,18 +11,23 @@ import daoJiangXingPage1 from './assets/imgs/dao-jiang-xing-01.jpg'
 import daoJiangXingPage2 from './assets/imgs/dao-jiang-xing-02.jpg'
 import daoJiangXingPage3 from './assets/imgs/dao-jiang-xing-03.jpg'
 import dangAiZaiKaoJinPage1 from './assets/imgs/dang-ai-zai-kao-jin-01.jpg'
+import fuQinPage1 from './assets/imgs/fuqin.jpg'
 import jiMoShaZhouLengPage1 from './assets/imgs/ji-mo-sha-zhou-leng-01.jpg'
 import liXiangSanXunPage1 from './assets/imgs/li-xiang-san-xun-01.png'
 import manManXiHuanNiPage1 from './assets/imgs/man-man-xi-huan-ni.jpg'
 import nuanNuanPage1 from './assets/imgs/nuan-nuan-01.jpg'
 import qiYueShangPage1 from './assets/imgs/qi-yue-shang.jpg'
 import suiYueShenTouPage1 from './assets/imgs/sui-yue-shen-tou.jpg'
+import suiSuiPage1 from './assets/imgs/suisui-1.png'
+import suiSuiPage2 from './assets/imgs/suisui-2.jpg'
+import suiSuiPage3 from './assets/imgs/suisui-3.jpg'
 import xiaTianDeFengPage1 from './assets/imgs/xia-tian-de-feng-01.jpg'
 import xiaTianDeFengPage2 from './assets/imgs/xia-tian-de-feng-02.jpg'
 import xiaoBanPage1 from './assets/imgs/xiao-ban-01.jpg'
 import mingYunPage1 from './assets/imgs/ming-yun-01.jpg'
 import mingYunPage2 from './assets/imgs/ming-yun-02.jpg'
 import mingYunPage3 from './assets/imgs/ming-yun-03.jpg'
+import yuJianPage1 from './assets/imgs/yujian.jpg'
 
 export const STORAGE_KEYS = {
   SPEED: 'score-autoplay-speed',
@@ -177,6 +182,24 @@ const rawScores = [
     ],
   },
   {
+    id: 'fu-qin',
+    title: '父亲',
+    artist: '筷子兄弟',
+    arranger: '未标注',
+    originalKey: 'E',
+    selectedKey: 'C',
+    tuning: '变调夹 4 品',
+    firstLetter: 'F',
+    sortKey: 'fu qin',
+    tags: ['六线谱', '弹唱谱', '1 页'],
+    source: '图片标注：筷子兄弟，1=E，变调夹 4 品',
+    summary:
+      '一页吉他弹唱谱，主要和弦为 C、F、G、Am、Em，含前奏、主歌与副歌，适合配合变调夹 4 品演奏。',
+    pages: [
+      { src: fuQinPage1, label: '第 1 页', focus: '前奏、主歌、副歌' },
+    ],
+  },
+  {
     id: 'li-xiang-san-xun',
     title: '理想三旬',
     artist: '陈鸿宇',
@@ -193,6 +216,26 @@ const rawScores = [
     pages: [
       { src: liXiangSanXunPage1, label: '第 1 页', focus: '完整曲谱' },
     ],
+  },
+  {
+    id: 'lan-lian-hua',
+    title: '蓝莲花',
+    artist: '许巍',
+    arranger: '有谱么 APP',
+    originalKey: '未标注',
+    selectedKey: '未标注',
+    tuning: 'APP 曲谱',
+    firstLetter: 'L',
+    sortKey: 'lan lian hua',
+    tags: ['有谱么 APP', '外部曲谱'],
+    source: '曲谱位于有谱么 APP',
+    summary:
+      '这首曲谱暂不存放本地图片，已作为外部来源条目收录在列表中，需要在有谱么 APP 内查看。',
+    pages: [],
+    externalSource: {
+      label: '有谱么 APP',
+      description: '打开有谱么 APP 搜索《蓝莲花》查看曲谱。',
+    },
   },
   {
     id: 'ji-mo-sha-zhou-leng',
@@ -285,6 +328,26 @@ const rawScores = [
     ],
   },
   {
+    id: 'sui-sui',
+    title: '岁岁',
+    artist: '任素汐',
+    arranger: '尼克猫',
+    originalKey: 'E',
+    selectedKey: 'C',
+    tuning: '变调夹 4 品',
+    firstLetter: 'S',
+    sortKey: 'sui sui',
+    tags: ['指弹谱', '弹唱谱', '3 页'],
+    source: '图片标注：电视剧《故乡，别来无恙》重逢曲，1=E，C 把位，Capo=4',
+    summary:
+      '三页吉他弹唱谱，主和弦围绕 C、Fmaj7、G、Em、Am 展开，包含前奏、主歌、副歌与尾段，适合配合变调夹 4 品演奏。',
+    pages: [
+      { src: suiSuiPage1, label: '第 1 页', focus: '前奏、主歌前半' },
+      { src: suiSuiPage2, label: '第 2 页', focus: '主歌后半、副歌前半' },
+      { src: suiSuiPage3, label: '第 3 页', focus: '副歌后半、尾段' },
+    ],
+  },
+  {
     id: 'xiao-ban',
     title: '小半',
     artist: '陈粒',
@@ -341,14 +404,37 @@ const rawScores = [
       { src: xiaTianDeFengPage2, label: '第 2 页', focus: '副歌后半、反复与结尾' },
     ],
   },
+  {
+    id: 'yu-jian',
+    title: '遇见',
+    artist: '孙燕姿',
+    arranger: '尼克猫',
+    originalKey: '#G',
+    selectedKey: 'G',
+    tuning: '变调夹 1 品',
+    firstLetter: 'Y',
+    sortKey: 'yu jian',
+    tags: ['六线谱', '弹唱谱', '1 页'],
+    source: '图片标注：词易家扬，曲林一峰，原 key #G，选 G，变调夹 1 品',
+    summary:
+      '一页吉他弹唱谱，主要和弦为 G、D、Em、C，编配以分解与扫弦节奏为主，适合配合变调夹 1 品演奏。',
+    pages: [
+      { src: yuJianPage1, label: '第 1 页', focus: '完整曲谱' },
+    ],
+  },
 ]
 
 export const scores = rawScores
-  .map((score) => ({
-    ...score,
-    pageCount: score.pages.length,
-    thumbnail: score.pages[0].src,
-  }))
+  .map((score) => {
+    const pages = score.pages || []
+
+    return {
+      ...score,
+      pages,
+      pageCount: pages.length,
+      thumbnail: pages[0]?.src || null,
+    }
+  })
   .sort((a, b) => a.sortKey.localeCompare(b.sortKey, 'en'))
 
 export const scoreGroups = scores.reduce((groups, score) => {
