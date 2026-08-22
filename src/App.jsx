@@ -217,7 +217,7 @@ function MissingScore({ scoreId }) {
 }
 
 function LibraryView() {
-  const ALPHABET = 'ABCDEF'.split('')
+  const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
   const existingLetters = scoreGroups.map((g) => g.letter)
 
   const scrollToLetter = (letter) => {

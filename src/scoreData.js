@@ -28,6 +28,10 @@ import mingYunPage1 from './assets/imgs/ming-yun-01.jpg'
 import mingYunPage2 from './assets/imgs/ming-yun-02.jpg'
 import mingYunPage3 from './assets/imgs/ming-yun-03.jpg'
 import yuJianPage1 from './assets/imgs/yujian.jpg'
+import woXiHuanShangNiShiDeNeiXinHuoDongPage1 from './assets/imgs/wo-xi-huan-shang-ni-shi-de-nei-xin-huo-dong.jpg'
+import zheShiJieNaMeDuoRenPage1 from './assets/imgs/zhe-shi-jie-na-me-duo-ren-01.png'
+import zheShiJieNaMeDuoRenPage2 from './assets/imgs/zhe-shi-jie-na-me-duo-ren-02.png'
+import zheShiJieNaMeDuoRenPage3 from './assets/imgs/zhe-shi-jie-na-me-duo-ren-03.png'
 
 export const STORAGE_KEYS = {
   SPEED: 'score-autoplay-speed',
@@ -420,6 +424,44 @@ const rawScores = [
       '一页吉他弹唱谱，主要和弦为 G、D、Em、C，编配以分解与扫弦节奏为主，适合配合变调夹 1 品演奏。',
     pages: [
       { src: yuJianPage1, label: '第 1 页', focus: '完整曲谱' },
+    ],
+  },
+  {
+    id: 'wo-xi-huan-shang-ni-shi-de-nei-xin-huo-dong',
+    title: '我喜欢上你时的内心活动',
+    artist: '陈绮贞',
+    arranger: '岛屿吉他',
+    originalKey: 'C',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'W',
+    sortKey: 'wo xi huan shang ni shi de nei xin huo dong',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片标注：岛屿吉他，词韩寒，曲陈光荣，原唱陈绮贞，原 key C，选 C',
+    summary:
+      '一页吉他和弦歌词谱，包含前奏、A 段、间奏和 B 段，主要和弦为 C、C7、Am、Dm、Em7、F、Fm、G7、G，适合 C 调弹唱练习。',
+    pages: [
+      { src: woXiHuanShangNiShiDeNeiXinHuoDongPage1, label: '第 1 页', focus: '前奏、A 段、间奏、B 段' },
+    ],
+  },
+  {
+    id: 'zhe-shi-jie-na-me-duo-ren',
+    title: '这世界那么多人',
+    artist: '莫文蔚',
+    arranger: '革命吉他制谱',
+    originalKey: 'B',
+    selectedKey: 'G',
+    tuning: '变调夹 4 品',
+    firstLetter: 'Z',
+    sortKey: 'zhe shi jie na me duo ren',
+    tags: ['六线谱', '弹唱谱', '3 页'],
+    source: '图片标注：革命吉他制谱，1=B，变调夹 4 品',
+    summary:
+      '三页吉他六线谱，主要和弦围绕 G、D、Em、C、Am7 等展开，包含前奏、主歌、副歌与尾段，适合配合变调夹 4 品演奏。',
+    pages: [
+      { src: zheShiJieNaMeDuoRenPage1, label: '第 1 页', focus: '前奏、主歌前半' },
+      { src: zheShiJieNaMeDuoRenPage2, label: '第 2 页', focus: '主歌后半、副歌' },
+      { src: zheShiJieNaMeDuoRenPage3, label: '第 3 页', focus: '副歌收束、尾段' },
     ],
   },
 ]
