@@ -32,6 +32,10 @@ import woXiHuanShangNiShiDeNeiXinHuoDongPage1 from './assets/imgs/wo-xi-huan-sha
 import zheShiJieNaMeDuoRenPage1 from './assets/imgs/zhe-shi-jie-na-me-duo-ren-01.png'
 import zheShiJieNaMeDuoRenPage2 from './assets/imgs/zhe-shi-jie-na-me-duo-ren-02.png'
 import zheShiJieNaMeDuoRenPage3 from './assets/imgs/zhe-shi-jie-na-me-duo-ren-03.png'
+import haoJiuBuJianPage1 from './assets/imgs/haojiubujian.jpg'
+import moPaMoPaPage1 from './assets/imgs/mopamopa1.jpg'
+import moPaMoPaPage2 from './assets/imgs/mopamopa2.jpg'
+import moPaMoPaPage3 from './assets/imgs/mopamopa3.jpg'
 
 export const STORAGE_KEYS = {
   SPEED: 'score-autoplay-speed',
@@ -462,6 +466,44 @@ const rawScores = [
       { src: zheShiJieNaMeDuoRenPage1, label: '第 1 页', focus: '前奏、主歌前半' },
       { src: zheShiJieNaMeDuoRenPage2, label: '第 2 页', focus: '主歌后半、副歌' },
       { src: zheShiJieNaMeDuoRenPage3, label: '第 3 页', focus: '副歌收束、尾段' },
+    ],
+  },
+  {
+    id: 'hao-jiu-bu-jian',
+    title: '好久不见',
+    artist: '陈奕迅',
+    arranger: '大树乐器',
+    originalKey: 'C',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'H',
+    sortKey: 'hao jiu bu jian',
+    tags: ['和弦歌词谱', '弹唱谱', '1 页'],
+    source: '图片标注：大树乐器，曲陈晓霞，词驰立，原调 C，选调 C',
+    summary:
+      '一页吉他弹唱谱，主要和弦为 C、Dm、Am7、F、G、Em、G7、A，含前奏、A 段、B 段与间奏，标注了扫弦节奏型。',
+    pages: [
+      { src: haoJiuBuJianPage1, label: '第 1 页', focus: '前奏、A 段、B 段、间奏' },
+    ],
+  },
+  {
+    id: 'mo-pa-mo-pa',
+    title: '莫怕莫怕',
+    artist: '任素汐',
+    arranger: '无限延音',
+    originalKey: 'C',
+    selectedKey: 'C',
+    tuning: '标准调弦',
+    firstLetter: 'M',
+    sortKey: 'mo pa mo pa',
+    tags: ['指弹谱', '弹唱谱', '3 页'],
+    source: '图片标注：无限延音编配，唐恬作词，彭飞作曲，1=C，4/4，♩=56',
+    summary:
+      '三页吉他弹唱谱，主要和弦为 Cadd9、A7sus4、Fmaj7、G、Am7、C7、C/E、Dm7、G/B，速度约 56，适合慢速指弹与跟唱练习。',
+    pages: [
+      { src: moPaMoPaPage1, label: '第 1 页', focus: '前奏、主歌前半' },
+      { src: moPaMoPaPage2, label: '第 2 页', focus: '主歌后半、副歌前半' },
+      { src: moPaMoPaPage3, label: '第 3 页', focus: '副歌后半、尾段' },
     ],
   },
 ]
